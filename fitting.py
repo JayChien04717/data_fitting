@@ -200,6 +200,10 @@ def decaysin(x, *p):
     yscale, freq, phase_deg, decay, y0 = p
     return yscale * np.sin(2*np.pi*freq*x + phase_deg*np.pi/180) * np.exp(-x/decay) + y0
 
+def decaysin2(x, *p):
+    yscale, freq, phase_deg, decay, y0 = p
+    return yscale * np.sin(2*np.pi*freq*x + phase_deg*np.pi/180) * np.exp(-x/decay) + y0, yscale*np.exp(-x/decay) + y0
+
 def fitdecaysin(xdata, ydata, fitparams=None):
     if fitparams is None: fitparams = [None]*5
     else: fitparams = np.copy(fitparams)
@@ -516,4 +520,3 @@ def fit_probg_X(xdata, ydata, fitparams=None):
         # return 0, 0
     return pOpt, pCov
 
-    
