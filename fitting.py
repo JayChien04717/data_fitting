@@ -3,7 +3,6 @@ import scipy as sp
 import cmath
 
 # ====================================================== #
-
 """
 Compare the fit between the check_measures (amps, avgi, and avgq by default) in data, using the compare_param_i-th parameter to do the comparison. Pick the best method of measurement out of the check_measures, and return the fit, fit_err, and any other get_best_data_params corresponding to that measurement.
 
@@ -103,7 +102,6 @@ def fitlogexp(xdata, ydata, fitparams=None):
     return pOpt, pCov
 
 # ====================================================== #
-
 # see https://www.science.org/doi/epdf/10.1126/science.aah5844
 # assumes function has been scaled to log scale and goes from 0 to 1
 def qp_expfunc(x, *p):
@@ -135,7 +133,9 @@ def fitqpexp(xdata, ydata, fitparams=None):
     return pOpt, pCov
 
 # ====================================================== #
-
+"""
+single lorentzian function 
+"""
 def lorfunc(x, *p):
     y0, yscale, x0, xscale = p
     return y0 + yscale/(1+(x-x0)**2/xscale**2)
@@ -157,6 +157,74 @@ def fitlor(xdata, ydata, fitparams=None):
         # return 0, 0
     return pOpt, pCov
 
+# ====================================================== #
+""" 
+Two lorentzian function
+"""
+def twolorfunc(x, *p):
+    y0, yscale1, x0_1, xscale1, yscale2, x0_2, xscale2 = p
+    return y0 + yscale1 / (1 + (x - x0_1)**2 / xscale1**2) + yscale2 / (1 + (x - x0_2)**2 / xscale2**2)
+def fittwolor(xdata, ydata, fitparams=None):
+    if fitparams is None: 
+        fitparams = [None] * 7
+    else: 
+        fitparams = np.copy(fitparams)
+    if fitparams[0] is None: fitparams[0] = (ydata[0] + ydata[-1]) / 2
+    if fitparams[1] is None: fitparams[1] = max(ydata) - min(ydata)
+    if fitparams[2] is None: fitparams[2] = xdata[np.argmax(abs(ydata - fitparams[0]))]
+    if fitparams[3] is None: fitparams[3] = (max(xdata) - min(xdata)) / 3
+    if fitparams[4] is None: fitparams[4] = max(ydata) - min(ydata)
+    if fitparams[5] is None: fitparams[5] = xdata[np.argmax(abs(ydata - fitparams[0])) - 10] 
+    if fitparams[6] is None: fitparams[6] = (max(xdata) - min(xdata)) / 3
+
+    fitparams = [0 if param is None else param for param in fitparams]
+    pOpt = fitparams
+    pCov = np.full(shape=(len(fitparams), len(fitparams)), fill_value=np.inf)
+    try:
+        pOpt, pCov = sp.curve_fit(twolorfunc, xdata, ydata, p0=fitparams)
+    except RuntimeError: 
+        print('Warning: fit failed!')
+    return pOpt, pCov
+
+# ====================================================== #
+""" 
+Three lorentzian function
+"""
+def threelorfunc(x, *p):
+    y0, yscale1, x0_1, xscale1, yscale2, x0_2, xscale2, yscale3, x0_3, xscale3 = p
+    return (
+        y0 + 
+        yscale1 / (1 + (x - x0_1)**2 / xscale1**2) + 
+        yscale2 / (1 + (x - x0_2)**2 / xscale2**2) + 
+        yscale3 / (1 + (x - x0_3)**2 / xscale3**2)
+    )
+
+
+def fitthreelor(xdata, ydata, fitparams=None):
+    if fitparams is None: 
+        fitparams = [None] * 10
+    else: 
+        fitparams = np.copy(fitparams)
+
+    if fitparams[0] is None: fitparams[0] = (ydata[0] + ydata[-1]) / 2
+    if fitparams[1] is None: fitparams[1] = max(ydata) - min(ydata)
+    if fitparams[2] is None: fitparams[2] = xdata[np.argmax(abs(ydata - fitparams[0]))]
+    if fitparams[3] is None: fitparams[3] = (max(xdata) - min(xdata)) / 3
+    if fitparams[4] is None: fitparams[4] = max(ydata) - min(ydata)
+    if fitparams[5] is None: fitparams[5] = xdata[np.argmax(abs(ydata - fitparams[0]))]  
+    if fitparams[6] is None: fitparams[6] = (max(xdata) - min(xdata)) / 5
+    if fitparams[7] is None: fitparams[7] = max(ydata) - min(ydata)
+    if fitparams[8] is None: fitparams[8] = xdata[np.argmax(abs(ydata - fitparams[0]))] 
+    if fitparams[9] is None: fitparams[9] = (max(xdata) - min(xdata)) / 5
+
+    fitparams = [0 if param is None else param for param in fitparams]
+    pOpt = fitparams
+    pCov = np.full(shape=(len(fitparams), len(fitparams)), fill_value=np.inf)
+    try:
+        pOpt, pCov = sp.curve_fit(threelorfunc, xdata, ydata, p0=fitparams)
+    except RuntimeError: 
+        print('Warning: fit failed!')
+    return pOpt, pCov
 # ====================================================== #
 
 def sinfunc(x, *p):
@@ -244,7 +312,7 @@ def fitdecaysin(xdata, ydata, fitparams=None):
 # T2 ramsey modify with 1/f noise type, check [A Quantum Engineer’s Guide to Superconducting Qubits]
 def decaysinmod(x, *p):
     yscale, freq, phase_deg, t1, tphi, y0 = p
-    return yscale * np.cos(2*np.pi*freq*x + phase_deg*np.pi/180) * np.exp(-x/(2*t1)) * np.exp(-x**2/tphi**2) 
+    return yscale * np.sin(2*np.pi*freq*x + phase_deg*np.pi/180) * np.exp(-x/(2*t1)) * np.exp(-x**2/tphi**2) 
 
 def fitdecaysinmod(xdata, ydata, fitparams=None):
     if fitparams is None: fitparams = [None]*6

@@ -21,13 +21,18 @@ def post_rotate(ydata):
         return np.std(iq.imag)
     res = minimize_scalar(lambda agl:std_q(ydata, agl), bounds=[0, 360])
     rotation_angle = res.x
-    ydata = np.real(rotate_complex(ydata,rotation_angle))
+    ydata = (rotate_complex(ydata,rotation_angle))
     return ydata
 
 
 def resonator_analyze(x, y):    
-    fit,_ = fithanger(x, np.abs(y))
-    
+    from resonator_tools import circuit
+
+    port1 = circuit.notch_port()
+    port1.add_data(x,y)
+    port1.autofit()
+    print("Fit results:", port1.fitresults)
+    port1.plotall()
     pass
 
 def spectrum_analyze(x, y, plot=False):
@@ -43,7 +48,7 @@ def spectrum_analyze(x, y, plot=False):
         plt.axvline(res, color='r', ls='--', label=f'$f_res$ = {res/1e9:.2f}')
         plt.legend()
         plt.show()
-
+    return res
 
 def amprabi_analyze(x, y, plot=False, normalize = False):
     if normalize==True:
@@ -57,6 +62,12 @@ def amprabi_analyze(x, y, plot=False, normalize = False):
     pi = round(x[np.argmax(sim)], 1)
     pi2 = round(x[round((np.argmin(sim) + np.argmax(sim))/2)], 1)
 
+    if pOpt[2] > 180: pOpt[2] = pOpt[2] - 360
+    elif pOpt[2] < -180: p[2] = pOpt[2] + 360
+    if pOpt[2] < 0: pi_length = (1/2 - pOpt[2]/180)/2/pOpt[1]
+    else: pi_gain= (3/2 - pOpt[2]/180)/2/pOpt[1]
+
+
     if plot==True:
         plt.figure(figsize=figsize)
         plt.plot(x, y, label = 'meas', ls='None', marker='o', markersize=3)
@@ -65,12 +76,15 @@ def amprabi_analyze(x, y, plot=False, normalize = False):
         plt.xlabel('$t\ (us)$',fontsize=15)
         if normalize==True:
             plt.ylabel('Population',fontsize=15)
-        plt.axvline(pi, ls='--', c='red', label=f'$\pi$ gain={pi}')
-        plt.axvline(pi2, ls='--', c='red', label=f'$\pi/2$ gain={pi2}')
+            plt.axvline(pi, ls='--', c='red', label=f'$\pi$ gain={pi}')
+            plt.axvline(pi2, ls='--', c='red', label=f'$\pi/2$ gain={pi2}')
+        else:
+            plt.axvline(pi_gain, ls='--', c='red', label=f'$\pi$ gain={pi_gain:.1f}')
+            plt.axvline(pi_gain//2, ls='--', c='red', label=f'$\pi$ gain={(pi_gain//2):.1f}')
         plt.legend()
         plt.tight_layout()
         plt.show()
-
+    return pi, pi2, max(y)-min(y)
     
 def lengthraig_analyze(x, y, plot=False, normalize = False):
     if normalize==True:
@@ -81,6 +95,16 @@ def lengthraig_analyze(x, y, plot=False, normalize = False):
 
     pOpt, pCov = fitdecaysin(x, y)
     sim = decaysin(x, *pOpt)
+    pi = round(x[np.argmax(sim)], 1)
+    pi2 = round(x[round((np.argmin(sim) + np.argmax(sim))/2)], 1)
+    if pOpt[2] > 180: pOpt[2] = pOpt[2] - 360
+    elif pOpt[2] < -180: p[2] = pOpt[2] + 360
+    if pOpt[2] < 0: 
+        pi_length = (1/2 - pOpt[2]/180)/2/pOpt[1]
+        pi2_length = (0 - pOpt[2]/180)/2/pOpt[1]
+    else: 
+        pi_length= (3/2 - pOpt[2]/180)/2/pOpt[1]
+        pi2_length = (1 - pOpt[2]/180)/2/pOpt[1]
 
     if plot==True:
         plt.figure(figsize=figsize)
@@ -90,6 +114,11 @@ def lengthraig_analyze(x, y, plot=False, normalize = False):
         plt.xlabel('$t\ (us)$',fontsize=15)
         if normalize==True:
             plt.ylabel('Population',fontsize=15)
+            plt.axvline(pi, ls='--', c='red', label=f'$\pi$ len={pi}')
+            plt.axvline(pi2, ls='--', c='red', label=f'$\pi/2$ len={pi2}')   
+        else:
+            plt.axvline(pi_length, ls='--', c='red', label=f'$\pi$ gain={pi_length:.1f}')
+            plt.axvline(pi2_length, ls='--', c='red', label=f'$\pi$ gain={pi2_length:.1f}')
         plt.legend()
         plt.tight_layout()
         plt.show()
@@ -137,7 +166,7 @@ def T2r_analyze(x, y, plot=False, normalize = False):
         plt.legend()
         plt.tight_layout()
         plt.show()
-
+    return pOpt[1]
 
 def T2e_analyze(x, y, plot=False, normalize = False):
     if normalize==True:
@@ -170,12 +199,13 @@ if __name__=="__main__":
 
     np.bool= bool
     np.float = np.float64
-    res = r'./r1_cal.hdf5'
+    res = r'Normalized_coupler_chen_054[7]_@7.819GHz_power_dp_002.hdf5'
     pdr = r'r1_pdr.hdf5'
     lenghrabi = r'q1_rabi.hdf5'
     t1= r'q1_T1_2.hdf5'
     t2 = r'q1_T2Ramsey_3.hdf5'
     spec = r'q1_twotone_4.hdf5'
+
 
     spec = Labber.LogFile(spec)
     pdr = Labber.LogFile(pdr)
@@ -183,12 +213,38 @@ if __name__=="__main__":
     f1 = Labber.LogFile(lenghrabi) 
     f2 = Labber.LogFile(t1) 
     f3 = Labber.LogFile(t2) 
-    (x, y) = fr.getTraceXY()
+    (x, y) = fr.getTraceXY(entry=3)
     (sx, sy) = spec.getTraceXY()
     (rx,ry) = f1.getTraceXY() 
     (t1x,t1y) = f2.getTraceXY() 
     (t2x,t2y) = f3.getTraceXY() 
     # spectrum_analyze(sx, sy, plot=True)
-    amprabi_analyze(rx, ry, plot=True, normalize=True)
+    lengthraig_analyze(rx, ry, plot=True, normalize=False)
+    amprabi_analyze(rx, ry, plot=True, normalize=False)
     # T1_analyze(t1x, t1y, plot=True,normalize=True)
     # T2r_analyze(t2x, t2y, plot=True)
+    # resonator_analyze(x,y)
+
+
+
+    phase_deg = 10
+    x = np.linspace(0, 3*np.pi, 1001)
+    y = np.sin(2*np.pi*0.6*x + phase_deg*np.pi/180) * np.exp(-x)
+    p, _ = fitdecaysin(x, y)
+    print(p[2])
+    if p[2] > 180: p[2] = p[2] - 360
+    elif p[2] < -180: p[2] = p[2] + 360
+    if p[2] < 0: 
+        pi_length = (1/2 - p[2]/180)/2/p[1]
+        pi2_length = (0 - p[2]/180)/2/p[1]
+    else: 
+        pi_length= (3/2 - p[2]/180)/2/p[1]
+        pi2_length = (1 - p[2]/180)/2/p[1]
+    sim = decaysin(x, *p)
+    # plt.plot(x, y)
+    # plt.plot(x, sim)
+    # plt.axvline(pi_length, label = 'pi', c ='red')
+    # plt.axvline(pi_length//2, label = 'pi//2', c = 'orange')
+    # plt.axvline(pi2_length, label = 'pi2', c = 'green')
+    # plt.legend()
+    # plt.show()
