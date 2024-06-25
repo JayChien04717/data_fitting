@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import scipy as sp
 import cmath
 from fitting import *
-from resonator_tools import circuit
+# from resonator_tools import circuit
 from addict import Dict
 
 figsize = (8,6)
@@ -35,8 +35,24 @@ def resonator_analyze(x, y):
     port1.plotall()
     pass
 
+def resonator_analyze2(x, y, plot=False):    
+    y = np.abs(y)
+    pOpt, pCov = fit_asym_lor(x, y)
+
+    if plot==True:
+        plt.figure(figsize=figsize)
+        plt.title(f'mag.',fontsize=15)
+        plt.plot(x, y, label = 'mag', marker='o', markersize=3)
+        plt.plot(x, asym_lorfunc(x, *pOpt), label = 'fit')
+        res = pOpt[2]
+        plt.axvline(res, color='r', ls='--', label=f'$f_res$ = {res/1e9:.2f}')
+        plt.legend()
+        plt.show()
+        return res
+
+
 def spectrum_analyze(x, y, plot=False):
-    y = post_rotate(y)
+    y = np.abs(y)
     pOpt, pCov = fitlor(x, y)
 
     if plot==True:
@@ -48,7 +64,7 @@ def spectrum_analyze(x, y, plot=False):
         plt.axvline(res, color='r', ls='--', label=f'$f_res$ = {res/1e9:.2f}')
         plt.legend()
         plt.show()
-    return res
+        return res
 
 def amprabi_analyze(x, y, plot=False, normalize = False):
     if normalize==True:
@@ -64,8 +80,12 @@ def amprabi_analyze(x, y, plot=False, normalize = False):
 
     if pOpt[2] > 180: pOpt[2] = pOpt[2] - 360
     elif pOpt[2] < -180: p[2] = pOpt[2] + 360
-    if pOpt[2] < 0: pi_length = (1/2 - pOpt[2]/180)/2/pOpt[1]
-    else: pi_gain= (3/2 - pOpt[2]/180)/2/pOpt[1]
+    if pOpt[2] < 0: 
+        pi_gain = (1/2 - pOpt[2]/180)/2/pOpt[1]
+        pi2_gain = (0 - pOpt[2]/180)/2/pOpt[1]
+    else: 
+        pi_gain= (3/2 - pOpt[2]/180)/2/pOpt[1]
+        pi2_gain = (1 - pOpt[2]/180)/2/pOpt[1]
 
 
     if plot==True:
@@ -80,11 +100,11 @@ def amprabi_analyze(x, y, plot=False, normalize = False):
             plt.axvline(pi2, ls='--', c='red', label=f'$\pi/2$ gain={pi2}')
         else:
             plt.axvline(pi_gain, ls='--', c='red', label=f'$\pi$ gain={pi_gain:.1f}')
-            plt.axvline(pi_gain//2, ls='--', c='red', label=f'$\pi$ gain={(pi_gain//2):.1f}')
+            plt.axvline(pi2_gain//2, ls='--', c='red', label=f'$\pi$ gain={(pi_gain//2):.1f}')
         plt.legend()
         plt.tight_layout()
         plt.show()
-    return pi, pi2, max(y)-min(y)
+    return pi_gain, pi2_gain, max(y)-min(y)
     
 def lengthraig_analyze(x, y, plot=False, normalize = False):
     if normalize==True:
