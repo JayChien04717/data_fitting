@@ -295,13 +295,6 @@ def decaysin(x, *p):
     yscale, freq, phase_deg, decay, y0 = p
     return yscale * np.sin(2*np.pi*freq*x + phase_deg*np.pi/180) * np.exp(-x/decay) + y0
 
-def decaysin2(x, *p):
-    '''
-    T2 ramsey decay combine exponation and gaussian
-    '''
-    yscale, freq, phase_deg, decay, y0 = p
-    return yscale * np.sin(2*np.pi*freq*x + phase_deg*np.pi/180) * np.exp(-x/decay) + y0, yscale*np.exp(-x/decay) + y0
-
 def fitdecaysin(xdata, ydata, fitparams=None):
     if fitparams is None: fitparams = [None]*5
     else: fitparams = np.copy(fitparams)
@@ -321,8 +314,8 @@ def fitdecaysin(xdata, ydata, fitparams=None):
     if fitparams[3] is None: fitparams[3]=max(xdata) - min(xdata)
     if fitparams[4] is None: fitparams[4]=np.mean(ydata)
     bounds = (
-        [0.75*fitparams[0], 0.1/(max(xdata)-min(xdata)), -360, 1e4, np.min(ydata)],
-        [1.25*fitparams[0], 30/(max(xdata)-min(xdata)), 360, 1e8, np.max(ydata)]
+        [0.75*fitparams[0], 0.1/(max(xdata)-min(xdata)), -360, 0.3*(max(xdata)-min(xdata)), np.min(ydata)],
+        [1.25*fitparams[0], 30/(max(xdata)-min(xdata)), 360, np.inf, np.max(ydata)]
         )
     for i, param in enumerate(fitparams):
         if not (bounds[0][i] < param < bounds[1][i]):
