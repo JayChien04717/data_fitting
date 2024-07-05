@@ -3,11 +3,9 @@ import matplotlib.pyplot as plt
 import scipy as sp
 import cmath
 from fitting import *
-# from resonator_tools import circuit
-from addict import Dict
+
 
 figsize = (8,6)
-
 def NormalizeData(zval):
     return (zval - np.min(zval)) / (np.max(zval) - np.min(zval))
 
@@ -92,11 +90,14 @@ def dispersive_analyze(x, y1, y2, fit=True):
     
 def amprabi_analyze(x, y, fit=True, normalize = False):
     if normalize==True:
-        y = -np.abs(y)
-        y = NormalizeData(y)
+        if y[0] > y.mean():
+            y = -np.abs(y)
+            y = NormalizeData(y)
+        elif y[0] < y.mean():
+            y = np.abs(y)
+            y = NormalizeData(y)
     elif normalize==False:
         y = np.abs(y)
-
     pOpt, pCov = fitdecaysin(x, y)
     sim = decaysin(x, *pOpt)
     pi = round(x[np.argmax(sim)], 1)
@@ -137,8 +138,12 @@ def amprabi_analyze(x, y, fit=True, normalize = False):
     
 def lengthrabi_analyze(x, y, fit=True, normalize = False):
     if normalize==True:
-        y = -np.abs(y)
-        y = NormalizeData(y)
+        if y[0] > y.mean():
+            y = -np.abs(y)
+            y = NormalizeData(y)
+        elif y[0] < y.mean():
+            y = np.abs(y)
+            y = NormalizeData(y)
     elif normalize==False:
         y = np.abs(y)
 
@@ -177,13 +182,15 @@ def lengthrabi_analyze(x, y, fit=True, normalize = False):
 
 def T1_analyze(x, y, fit=True, normalize = False):
     if normalize==True:
-        y = -np.abs(y)
-        y = NormalizeData(y)
+        if y[0] > y[-1]:
+            y = np.abs(y)
+            y = NormalizeData(y)
+        elif y[0] < y[-1]:
+            y = -np.abs(y)
+            y = NormalizeData(y)
     elif normalize==False:
         y = np.abs(y)
 
-    pOpt, pCov = fitexp(x, y)
-    sim = expfunc(x, *pOpt)
     
     
     plt.figure(figsize=figsize)
@@ -200,8 +207,12 @@ def T1_analyze(x, y, fit=True, normalize = False):
 
 def T2r_analyze(x, y, fit=True, normalize = False):
     if normalize==True:
-        y = -np.abs(y)
-        y = NormalizeData(y)
+        if y[0] > y[-1]:
+            y = -np.abs(y)
+            y = NormalizeData(y)
+        elif y[0] < y[-1]:
+            y = np.abs(y)
+            y = NormalizeData(y)
     elif normalize==False:
         y = np.abs(y)
 
@@ -225,15 +236,18 @@ def T2r_analyze(x, y, fit=True, normalize = False):
 
 def T2e_analyze(x, y, fit=True, normalize = False):
     if normalize==True:
-        y = -np.abs(y)
-        y = NormalizeData(y)
+        if y[0] > y[-1]:
+            y = np.abs(y)
+            y = NormalizeData(y)
+        elif y[0] < y[-1]:
+            y = -np.abs(y)
+            y = NormalizeData(y)
     elif normalize==False:
         y = np.abs(y)
 
     pOpt, pCov = fitexp(x, y)
     sim = expfunc(x, *pOpt)
 
-    
     plt.figure(figsize=figsize)
     plt.plot(x, y, label = 'meas', ls='-', marker='o', markersize=3)
     if fit==True:
@@ -249,7 +263,7 @@ def T2e_analyze(x, y, fit=True, normalize = False):
 
 if __name__=="__main__":
     import sys, os
-    os.chdir(r'C:\Users\QEL\Desktop\fit_pack\data')
+    os.chdir(r'C:\Users\QEL\Desktop\Jay PhD\Code\data_fitting\data')
     sys.path.append(r'C:\Program Files\Keysight\Labber\Script')
     import Labber
 
@@ -275,32 +289,12 @@ if __name__=="__main__":
     (t1x,t1y) = f2.getTraceXY() 
     (t2x,t2y) = f3.getTraceXY() 
     # spectrum_analyze(sx, sy, plot=True)
-    lengthraig_analyze(rx, ry, plot=True, normalize=False)
-    amprabi_analyze(rx, ry, plot=True, normalize=False)
+    # lengthraig_analyze(rx, ry, plot=True, normalize=False)
+    amprabi_analyze(rx, ry, fit=True, normalize=True)
     # T1_analyze(t1x, t1y, plot=True,normalize=True)
     # T2r_analyze(t2x, t2y, plot=True)
     # resonator_analyze(x,y)
 
 
 
-    phase_deg = 10
-    x = np.linspace(0, 3*np.pi, 1001)
-    y = np.sin(2*np.pi*0.6*x + phase_deg*np.pi/180) * np.exp(-x)
-    p, _ = fitdecaysin(x, y)
-    print(p[2])
-    if p[2] > 180: p[2] = p[2] - 360
-    elif p[2] < -180: p[2] = p[2] + 360
-    if p[2] < 0: 
-        pi_length = (1/2 - p[2]/180)/2/p[1]
-        pi2_length = (0 - p[2]/180)/2/p[1]
-    else: 
-        pi_length= (3/2 - p[2]/180)/2/p[1]
-        pi2_length = (1 - p[2]/180)/2/p[1]
-    sim = decaysin(x, *p)
-    # plt.plot(x, y)
-    # plt.plot(x, sim)
-    # plt.axvline(pi_length, label = 'pi', c ='red')
-    # plt.axvline(pi_length//2, label = 'pi//2', c = 'orange')
-    # plt.axvline(pi2_length, label = 'pi2', c = 'green')
-    # plt.legend()
-    # plt.show()
+  
