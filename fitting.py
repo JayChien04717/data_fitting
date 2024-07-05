@@ -263,12 +263,42 @@ def fitsin(xdata, ydata, fitparams=None):
     return pOpt, pCov
 
 # ====================================================== #
+''' 
+asymmtric lorentzian function
+'''
+def asym_lorfunc(x, *p):
+    y0, A, x0, gamma, alpha = p
+    return y0 + A / (1 + ((x - x0) / (gamma * (1 + alpha * (x - x0))))**2)
+def fit_asym_lor(xdata, ydata, fitparams=None):
+    if fitparams is None: 
+        fitparams = [None] * 5
+    else: 
+        fitparams = np.copy(fitparams)
+
+    if fitparams[0] is None: fitparams[0] = (ydata[0] + ydata[-1]) / 2
+    if fitparams[1] is None: fitparams[1] = max(ydata) - min(ydata)
+    if fitparams[2] is None: fitparams[2] = xdata[np.argmax(abs(ydata - fitparams[0]))]
+    if fitparams[3] is None: fitparams[3] = (max(xdata) - min(xdata)) / 10
+    if fitparams[4] is None: fitparams[4] = 0
+
+    pOpt = fitparams
+    pCov = np.full(shape=(len(fitparams), len(fitparams)), fill_value=np.inf)
+    try:
+        pOpt, pCov = sp.optimize.curve_fit(asym_lorfunc, xdata, ydata, p0=fitparams)
+    except RuntimeError: 
+        print('Warning: fit failed!')
+    return pOpt, pCov
+
+# ====================================================== #
 
 def decaysin(x, *p):
     yscale, freq, phase_deg, decay, y0 = p
     return yscale * np.sin(2*np.pi*freq*x + phase_deg*np.pi/180) * np.exp(-x/decay) + y0
 
 def decaysin2(x, *p):
+    '''
+    T2 ramsey decay combine exponation and gaussian
+    '''
     yscale, freq, phase_deg, decay, y0 = p
     return yscale * np.sin(2*np.pi*freq*x + phase_deg*np.pi/180) * np.exp(-x/decay) + y0, yscale*np.exp(-x/decay) + y0
 
