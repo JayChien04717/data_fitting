@@ -74,7 +74,7 @@ def dispersive_analyze(x, y1, y2, fit=True):
     res2 = pOpt2[2]
     
     plt.figure(figsize=figsize)
-    plt.title(f'$\chi=${(res2/1e6-res1/1e6):.3f}, unit = MHz',fontsize=15)
+    plt.title(f'$\chi=${(res2-res1):.3f}, unit = MHz',fontsize=15)
     plt.plot(x, y1, label = 'e', marker='o', markersize=3)
     plt.plot(x, y2, label = 'g', marker='o', markersize=3)
     if fit==True:
