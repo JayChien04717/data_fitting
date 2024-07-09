@@ -55,7 +55,7 @@ def spectrum_analyze(x, y, fit=True):
 
     plt.figure(figsize=figsize)
     plt.title(f'mag.',fontsize=15)
-    plt.plot(x, y, label = 'mag', marker='o', markersize=3)
+    plt.plot(x, y, label = 'mag', marker='s', markersize=5)
     if fit==True:
         plt.plot(x, lorfunc(x, *pOpt), label = 'fit')
         plt.axvline(res, color='r', ls='--', label=f'$f_res$ = {res:.2f}')
@@ -75,8 +75,8 @@ def dispersive_analyze(x, y1, y2, fit=True):
     
     plt.figure(figsize=figsize)
     plt.title(f'$\chi=${(res2-res1):.3f}, unit = MHz',fontsize=15)
-    plt.plot(x, y1, label = 'e', marker='o', markersize=3)
-    plt.plot(x, y2, label = 'g', marker='o', markersize=3)
+    plt.plot(x, y1, color='r', label = 'e', marker='s', markersize=5)
+    plt.plot(x, y2, color='g', label = 'g', marker='s', markersize=5)
     if fit==True:
         plt.plot(x, asym_lorfunc(x, *pOpt1), label = f'fite, $\kappa$ = {pOpt1[3]:.2f}MHz')
         plt.plot(x, asym_lorfunc(x, *pOpt2), label = f'fitg, $\kappa$ = {pOpt2[3]:.2f}MHz')
@@ -110,7 +110,7 @@ def amprabi_analyze(x, y, fit=True, normalize = False):
 
 
     plt.figure(figsize=figsize)
-    plt.plot(x, y, label = 'meas', ls='-', marker='o', markersize=3)
+    plt.plot(x, y, label = 'meas', ls='-', marker='s', markersize=5)
     if fit==True:
         plt.plot(x, sim, label = 'fit')
     plt.title(f'Amplitude Rabi',fontsize=15)
@@ -149,7 +149,7 @@ def lengthrabi_analyze(x, y, fit=True, normalize = False):
 
 
     plt.figure(figsize=figsize)
-    plt.plot(x, y, label = 'meas', ls='-', marker='o', markersize=3)
+    plt.plot(x, y, label = 'meas', ls='-', marker='s', markersize=5)
     if fit==True:
         plt.plot(x, sim, label = 'fit')
     plt.title(f'Length Rabi',fontsize=15)
@@ -173,7 +173,7 @@ def T1_analyze(x, y, fit=True, normalize = False):
     sim = expfunc(x, *pOpt)
     
     plt.figure(figsize=figsize)
-    plt.plot(x, y, label = 'meas', ls='-', marker='o', markersize=3)
+    plt.plot(x, y, label = 'meas', ls='-', marker='s', markersize=5)
     if fit==True:
         plt.plot(x, sim, label = 'fit')
     plt.title(f'T1 = {pOpt[3]:.2f}$\mu s$',fontsize=15)
@@ -192,7 +192,7 @@ def T2r_analyze(x, y, fit=True, normalize = False):
 
 
     plt.figure(figsize=figsize)
-    plt.plot(x, y, label = 'meas', ls='-', marker='o', markersize=3)
+    plt.plot(x, y, label = 'meas', ls='-', marker='s', markersize=5)
     if fit==True:
         plt.plot(x, sim, label = 'fit')
     plt.title(f'T2r = {pOpt[3]:.2f}$\mu s, detune = {pOpt[1]:.2f}MHz \pm {(error[1])*1e3:.2f}kHz$',fontsize=15)
@@ -210,7 +210,7 @@ def T2e_analyze(x, y, fit=True, normalize = False):
     sim = expfunc(x, *pOpt)
 
     plt.figure(figsize=figsize)
-    plt.plot(x, y, label = 'meas', ls='-', marker='o', markersize=3)
+    plt.plot(x, y, label = 'meas', ls='-', marker='s', markersize=5)
     if fit==True:
         plt.plot(x, sim, label = 'fit')
     plt.title(f'T2e = {pOpt[3]:.2f}$\mu s$',fontsize=15)
