@@ -654,4 +654,3 @@ def fit_probg_X(xdata, ydata, fitparams=None):
         print('Warning: fit failed!')
         # return 0, 0
     return pOpt, pCov
-
