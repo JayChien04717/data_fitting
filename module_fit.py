@@ -42,10 +42,10 @@ def resonator_analyze2(x, y, fit=True):
     plt.plot(x, y, label = 'mag', marker='o', markersize=3)
     if fit==True:
         plt.plot(x, asym_lorfunc(x, *pOpt), label = f'fit, $\kappa$={pOpt[3]}')
-    plt.axvline(res, color='r', ls='--', label=f'$f_res$ = {res/1e6:.2f}')
+    plt.axvline(res, color='r', ls='--', label=f'$f_res$ = {res:.2f}')
     plt.legend()
     plt.show()
-    return res
+    return round(res, 2)
 
 
 def spectrum_analyze(x, y, fit=True):
@@ -55,13 +55,15 @@ def spectrum_analyze(x, y, fit=True):
 
     plt.figure(figsize=figsize)
     plt.title(f'mag.',fontsize=15)
-    plt.plot(x, y, label = 'mag', marker='o', markersize=3)
+    plt.plot(x, y, label = 'mag', marker='s', markersize=5)
     if fit==True:
         plt.plot(x, lorfunc(x, *pOpt), label = 'fit')
-        return res
-    plt.axvline(res, color='r', ls='--', label=f'$f_res$ = {res/1e6:.2f}')
+        plt.axvline(res, color='r', ls='--', label=f'$f_res$ = {res:.2f}')
+        return round(res, 2)
+        
     plt.legend()
     plt.show()
+
     
 def dispersive_analyze(x, y1, y2, fit=True):    
     y1 = np.abs(y1)
@@ -73,33 +75,26 @@ def dispersive_analyze(x, y1, y2, fit=True):
     
     plt.figure(figsize=figsize)
     plt.title(f'$\chi=${(res2/1e6-res1/1e6):.3f}, unit = MHz',fontsize=15)
-    plt.plot(x, y1, label = 'e', marker='o', markersize=3)
-    plt.plot(x, y2, label = 'g', marker='o', markersize=3)
+    plt.plot(x, y1, color='r', label = 'e', marker='s', markersize=5)
+    plt.plot(x, y2, color='g', label = 'g', marker='s', markersize=5)
     if fit==True:
-        plt.plot(x, asym_lorfunc(x, *pOpt1), label = f'fite, $\kappa$ = {pOpt1[3]/1e6:.2f}')
-        plt.plot(x, asym_lorfunc(x, *pOpt2), label = f'fitg, $\kappa$ = {pOpt2[3]/1e6:.2f}')
-    plt.axvline(res1, color='r', ls='--', label=f'$f_res$ = {res1/1e6:.2f}')
-    plt.axvline(res2, color='g', ls='--', label=f'$f_res$ = {res2/1e6:.2f}')
+        plt.plot(x, asym_lorfunc(x, *pOpt1), label = f'fite, $\kappa$ = {pOpt1[3]:.2f}MHz')
+        plt.plot(x, asym_lorfunc(x, *pOpt2), label = f'fitg, $\kappa$ = {pOpt2[3]:.2f}MHz')
+    plt.axvline(res1, color='r', ls='--', label=f'$f_res$ = {res1:.2f}')
+    plt.axvline(res2, color='g', ls='--', label=f'$f_res$ = {res2:.2f}')
     plt.legend()
     plt.figure(figsize=figsize)
     plt.plot(x, y1-y2)
-    plt.axvline(x[np.argmax(y1-y2)], color='r',ls='--', label=f'max SNR1 = {x[np.argmax(y1-y2)]/1e6:.2f}')
-    plt.axvline(x[np.argmin(y1-y2)], color='g',ls='--', label=f'max SNR2 = {x[np.argmin(y1-y2)]/1e6:.2f}')
+    plt.axvline(x[np.argmax(y1-y2)], color='r',ls='--', label=f'max SNR1 = {x[np.argmax(y1-y2)]:.2f}')
+    plt.axvline(x[np.argmin(y1-y2)], color='g',ls='--', label=f'max SNR2 = {x[np.argmin(y1-y2)]:.2f}')
     plt.legend()
     plt.show()
     
 def amprabi_analyze(x, y, fit=True, normalize = False):
-    if normalize==True:
-        if y[0] > y.mean():
-            y = -np.abs(y)
-            y = NormalizeData(y)
-        elif y[0] < y.mean():
-            y = np.abs(y)
-            y = NormalizeData(y)
-    elif normalize==False:
-        y = np.abs(y)
-    pOpt, pCov = fitdecaysin(x, y)
+    y = np.abs(y)
+    pOpt, pCov = fitdecaysin(x, y, [None, None, None, 1e5, None])
     sim = decaysin(x, *pOpt)
+    
     pi = round(x[np.argmax(sim)], 1)
     pi2 = round(x[round((np.argmin(sim) + np.argmax(sim))/2)], 1)
 
@@ -115,7 +110,7 @@ def amprabi_analyze(x, y, fit=True, normalize = False):
 
 
     plt.figure(figsize=figsize)
-    plt.plot(x, y, label = 'meas', ls='-', marker='o', markersize=3)
+    plt.plot(x, y, label = 'meas', ls='-', marker='s', markersize=5)
     if fit==True:
         plt.plot(x, sim, label = 'fit')
     plt.title(f'Amplitude Rabi',fontsize=15)
@@ -137,18 +132,10 @@ def amprabi_analyze(x, y, fit=True, normalize = False):
         return round(pi_gain,1), round(pi2_gain, 1), max(y)-min(y)
     
 def lengthrabi_analyze(x, y, fit=True, normalize = False):
-    if normalize==True:
-        if y[0] > y.mean():
-            y = -np.abs(y)
-            y = NormalizeData(y)
-        elif y[0] < y.mean():
-            y = np.abs(y)
-            y = NormalizeData(y)
-    elif normalize==False:
-        y = np.abs(y)
-
+    y = np.abs(y)
     pOpt, pCov = fitdecaysin(x, y)
     sim = decaysin(x, *pOpt)
+
     pi = round(x[np.argmax(sim)], 1)
     pi2 = round(x[round((np.argmin(sim) + np.argmax(sim))/2)], 1)
     if pOpt[2] > 180: pOpt[2] = pOpt[2] - 360
@@ -162,10 +149,10 @@ def lengthrabi_analyze(x, y, fit=True, normalize = False):
 
 
     plt.figure(figsize=figsize)
-    plt.plot(x, y, label = 'meas', ls='-', marker='o', markersize=3)
+    plt.plot(x, y, label = 'meas', ls='-', marker='s', markersize=5)
     if fit==True:
         plt.plot(x, sim, label = 'fit')
-    plt.title(f'Length Rabi',fontsize=15)
+    plt.title(f'Length Rabi, Rabi frequency={pOpt[1]:.2f}MHz',fontsize=15)
     plt.xlabel('$t\ (us)$',fontsize=15)
     if normalize==True:
         plt.ylabel('Population',fontsize=15)
@@ -173,28 +160,20 @@ def lengthrabi_analyze(x, y, fit=True, normalize = False):
         plt.axvline(pi2, ls='--', c='red', label=f'$\pi/2$ len={pi2}')   
         return pi, pi2
     else:
-        plt.axvline(pi_length, ls='--', c='red', label=f'$\pi$ length={pi_length:.3f}')
-        plt.axvline(pi2_length, ls='--', c='red', label=f'$\pi$ length={pi2_length:.3f}')
+        plt.axvline(pi_length, ls='--', c='red', label=f'$\pi$ length={pi_length:.3f}$\mu$s')
+        plt.axvline(pi2_length, ls='--', c='red', label=f'$\pi$ length={pi2_length:.3f}$\mu$s')
         return pi_length, pi2_length
     plt.legend()
     plt.tight_layout()
     plt.show()
 
 def T1_analyze(x, y, fit=True, normalize = False):
-    if normalize==True:
-        if y[0] > y[-1]:
-            y = np.abs(y)
-            y = NormalizeData(y)
-        elif y[0] < y[-1]:
-            y = -np.abs(y)
-            y = NormalizeData(y)
-    elif normalize==False:
-        y = np.abs(y)
-
-    
+    y = np.abs(y)
+    pOpt, pCov = fitexp(x, y)
+    sim = expfunc(x, *pOpt)
     
     plt.figure(figsize=figsize)
-    plt.plot(x, y, label = 'meas', ls='-', marker='o', markersize=3)
+    plt.plot(x, y, label = 'meas', ls='-', marker='s', markersize=5)
     if fit==True:
         plt.plot(x, sim, label = 'fit')
     plt.title(f'T1 = {pOpt[3]:.2f}$\mu s$',fontsize=15)
@@ -206,23 +185,13 @@ def T1_analyze(x, y, fit=True, normalize = False):
     plt.show()
 
 def T2r_analyze(x, y, fit=True, normalize = False):
-    if normalize==True:
-        if y[0] > y[-1]:
-            y = -np.abs(y)
-            y = NormalizeData(y)
-        elif y[0] < y[-1]:
-            y = np.abs(y)
-            y = NormalizeData(y)
-    elif normalize==False:
-        y = np.abs(y)
-
+    y = np.abs(y)
     pOpt, pCov = fitdecaysin(x, y)
     sim = decaysin(x, *pOpt)
     error = np.sqrt(np.diag(pCov))
 
-
     plt.figure(figsize=figsize)
-    plt.plot(x, y, label = 'meas', ls='-', marker='o', markersize=3)
+    plt.plot(x, y, label = 'meas', ls='-', marker='s', markersize=5)
     if fit==True:
         plt.plot(x, sim, label = 'fit')
     plt.title(f'T2r = {pOpt[3]:.2f}$\mu s, detune = {pOpt[1]:.2f}MHz \pm {(error[1])*1e3:.2f}kHz$',fontsize=15)
@@ -235,21 +204,12 @@ def T2r_analyze(x, y, fit=True, normalize = False):
     return pOpt[1]
 
 def T2e_analyze(x, y, fit=True, normalize = False):
-    if normalize==True:
-        if y[0] > y[-1]:
-            y = np.abs(y)
-            y = NormalizeData(y)
-        elif y[0] < y[-1]:
-            y = -np.abs(y)
-            y = NormalizeData(y)
-    elif normalize==False:
-        y = np.abs(y)
-
+    y = np.abs(y)
     pOpt, pCov = fitexp(x, y)
     sim = expfunc(x, *pOpt)
 
     plt.figure(figsize=figsize)
-    plt.plot(x, y, label = 'meas', ls='-', marker='o', markersize=3)
+    plt.plot(x, y, label = 'meas', ls='-', marker='s', markersize=5)
     if fit==True:
         plt.plot(x, sim, label = 'fit')
     plt.title(f'T2e = {pOpt[3]:.2f}$\mu s$',fontsize=15)
@@ -290,9 +250,9 @@ if __name__=="__main__":
     (t2x,t2y) = f3.getTraceXY() 
     # spectrum_analyze(sx, sy, plot=True)
     # lengthraig_analyze(rx, ry, plot=True, normalize=False)
-    amprabi_analyze(rx, ry, fit=True, normalize=True)
-    # T1_analyze(t1x, t1y, plot=True,normalize=True)
-    # T2r_analyze(t2x, t2y, plot=True)
+    # amprabi_analyze(rx, ry, fit=True, normalize=True)
+    # T1_analyze(t1x, t1y, fit=True,normalize=True)
+    T2r_analyze(t2x, t2y, fit=True, normalize=False)
     # resonator_analyze(x,y)
 
 
