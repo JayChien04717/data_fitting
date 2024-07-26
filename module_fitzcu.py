@@ -92,7 +92,7 @@ def dispersive_analyze(x, y1, y2, fit=True):
     
 def amprabi_analyze(x, y, fit=True, normalize = False):
     y = np.abs(y)
-    pOpt, pCov = fitdecaysin(x, y)
+    pOpt, pCov = fitdecaysin(x, y, [None, None, None, 1e5, None])
     sim = decaysin(x, *pOpt)
     
     pi = round(x[np.argmax(sim)], 1)
@@ -152,18 +152,19 @@ def lengthrabi_analyze(x, y, fit=True, normalize = False):
     plt.plot(x, y, label = 'meas', ls='-', marker='s', markersize=5)
     if fit==True:
         plt.plot(x, sim, label = 'fit')
-    plt.title(f'Length Rabi',fontsize=15)
+    plt.title(f'Length Rabi freq={pOpt[1]:.3}MHz',fontsize=15)
     plt.xlabel('$t\ (us)$',fontsize=15)
     if normalize==True:
         plt.ylabel('Population',fontsize=15)
         plt.axvline(pi, ls='--', c='red', label=f'$\pi$ len={pi}')
         plt.axvline(pi2, ls='--', c='red', label=f'$\pi/2$ len={pi2}')   
+        plt.legend()
         return pi, pi2
     else:
         plt.axvline(pi_length, ls='--', c='red', label=f'$\pi$ length={pi_length:.3f}$\mu$s')
         plt.axvline(pi2_length, ls='--', c='red', label=f'$\pi$ length={pi2_length:.3f}$\mu$s')
+            plt.legend()
         return pi_length, pi2_length
-    plt.legend()
     plt.tight_layout()
     plt.show()
 
