@@ -125,7 +125,7 @@ def amprabi_analyze(x, y, fit=True, normalize = False):
         return round(pi, 1), round(pi2, 1), max(y)-min(y)
     else:
         plt.axvline(pi_gain, ls='--', c='red', label=f'$\pi$ gain={pi_gain:.1f}')
-        plt.axvline(pi2_gain, ls='--', c='red', label=f'$\pi$ gain={(pi2_gain):.1f}')
+        plt.axvline(pi2_gain, ls='--', c='red', label=f'$\pi/2$ gain={(pi2_gain):.1f}')
         plt.legend(loc=4)
         plt.tight_layout()
         plt.show()
@@ -162,8 +162,8 @@ def lengthrabi_analyze(x, y, fit=True, normalize = False):
         return pi, pi2
     else:
         plt.axvline(pi_length, ls='--', c='red', label=f'$\pi$ length={pi_length:.3f}$\mu$s')
-        plt.axvline(pi2_length, ls='--', c='red', label=f'$\pi$ length={pi2_length:.3f}$\mu$s')
-            plt.legend()
+        plt.axvline(pi2_length, ls='--', c='red', label=f'$\pi/2$ length={pi2_length:.3f}$\mu$s')
+        plt.legend()
         return pi_length, pi2_length
     plt.tight_layout()
     plt.show()
