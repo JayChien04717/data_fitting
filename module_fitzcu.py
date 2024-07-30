@@ -224,6 +224,28 @@ def T2e_analyze(x, y, fit=True, normalize = False):
     plt.tight_layout()
     plt.show()
 
+def T2rm_analyze(x, y, fit=True, normalize = False):
+    '''
+    T2 ramsey decay with 1/f noise gaussian package
+    '''
+    y = np.abs(y)
+    pOpt, pCov = fitdecaysinmod(x, y)
+    sim = decaysinmod(x, *pOpt)
+    error = np.sqrt(np.diag(pCov))
+
+    plt.figure(figsize=figsize)
+    plt.plot(x, y, label = 'meas', ls='-', marker='s', markersize=5)
+    if fit==True:
+        plt.plot(x, sim, label = 'fit')
+    plt.title(f'T2r = {pOpt[3]:.2f}$\mu s, detune = {pOpt[1]:.2f}MHz \pm {(error[1])*1e3:.2f}kHz$',fontsize=15)
+    plt.xlabel('$t\ (\mu s)$',fontsize=15)
+    if normalize==True:
+        plt.ylabel('Population',fontsize=15)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+    print(f'T1={pOpt[3]:.2f}, Tphi={pOpt[4]:.2f}')
+    return pOpt[1]
 
 if __name__=="__main__":
     import sys, os
