@@ -55,14 +55,16 @@ def spectrum_analyze(x, y, fit=True):
 
     plt.figure(figsize=figsize)
     plt.title(f'mag.',fontsize=15)
-    plt.plot(x, y, label = 'mag', marker='s', markersize=5)
+    plt.plot(x, y, label = 'mag', marker='o', markersize=3)
     if fit==True:
         plt.plot(x, lorfunc(x, *pOpt), label = 'fit')
-        plt.axvline(res, color='r', ls='--', label=f'$f_res$ = {res:.2f}')
-        return round(res, 2)
-        
+        plt.axvspan(res-pOpt[3], res+pOpt[3], alpha=0.5, label=f'lw = {2*pOpt[3]:.3f}MHz')
+        plt.legend()
+        return res
+    plt.axvline(res, color='r', ls='--', label=f'$f_res$ = {res:.2f}')
     plt.legend()
     plt.show()
+    return res
 
     
 def dispersive_analyze(x, y1, y2, fit=True):    
