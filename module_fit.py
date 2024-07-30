@@ -55,15 +55,34 @@ def spectrum_analyze(x, y, fit=True):
 
     plt.figure(figsize=figsize)
     plt.title(f'mag.',fontsize=15)
-    plt.plot(x, y, label = 'mag', marker='s', markersize=5)
+    plt.plot(x, y, label = 'mag', marker='o', markersize=3)
     if fit==True:
         plt.plot(x, lorfunc(x, *pOpt), label = 'fit')
-        plt.axvline(res, color='r', ls='--', label=f'$f_res$ = {res:.2f}')
-        return round(res, 2)
-        
+        plt.axvspan(res-pOpt[3], res+pOpt[3], alpha=0.5, label=f'lw = {2*pOpt[3]/1e6}MHz')
+        plt.legend()
+        return res
+    plt.axvline(res, color='r', ls='--', label=f'$f_res$ = {res/1e6:.2f}')
     plt.legend()
     plt.show()
+    return res
 
+def acstark_analyze(x, y, fit=True):
+    y = np.abs(y)
+    pOpt, pCov = fitlor(x, y)
+    res = pOpt[2]
+
+    plt.figure(figsize=figsize)
+    plt.title(f'mag.',fontsize=15)
+    plt.plot(x, y, label = 'mag', marker='o', markersize=3)
+    if fit==True:
+        plt.plot(x, lorfunc(x, *pOpt), label = 'fit')
+        plt.axvspan(res-pOpt[3], res+pOpt[3], alpha=0.5, label=f'lw = {2*pOpt[3]/1e6}MHz')
+        plt.legend()
+        return res
+    plt.axvline(res, color='r', ls='--', label=f'$f_res$ = {res/1e6:.2f}')
+    plt.legend()
+    plt.show()
+    return pOpt[3]
     
 def dispersive_analyze(x, y1, y2, fit=True):    
     y1 = np.abs(y1)
