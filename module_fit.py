@@ -142,8 +142,7 @@ def spectrum_analyze(x: float, y: float, fit: bool = True) -> float:
     """
     y = np.abs(y)
     pOpt, pCov = fitlor(x, y)
-    res = pOpt[2] / 1e9
-
+    res = pOpt[2]
     plt.figure(figsize=figsize)
     plt.title(f"mag.", fontsize=15)
     plt.plot(x, y, label="mag", marker="o", markersize=3)
