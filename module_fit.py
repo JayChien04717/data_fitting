@@ -114,7 +114,8 @@ def resonator_analyze2(x, y, fit: bool = True):
     plt.title(f"resonator spectrum.", fontsize=15)
     plt.plot(x, y, label="mag", marker="o", markersize=3)
     if fit == True:
-        plt.plot(x, asym_lorfunc(x, *pOpt), label=f"fit, $\kappa$={pOpt[3]/1e6:.3f}MHz")
+        plt.plot(x, asym_lorfunc(x, *pOpt),
+                 label=f"fit, $\kappa$={pOpt[3]/1e6:.3f}MHz")
     plt.axvline(res, color="r", ls="--", label=f"$f_res$ = {res/1e9:.2f} GHz")
     plt.legend()
     plt.show()
@@ -152,7 +153,6 @@ def spectrum_analyze(x: float, y: float, fit: bool = True) -> float:
             res - pOpt[3], res + pOpt[3], alpha=0.5, label=f"lw = {2*pOpt[3]/1e6}MHz"
         )
         plt.legend()
-        return res
     plt.axvline(res, color="r", ls="--", label=f"$f_res$ = {res/1e6:.2f}")
     plt.legend()
     plt.show()
@@ -264,8 +264,10 @@ def amprabi_analyze(x: int, y: float, fit: bool = True, normalize: bool = False)
         plt.show()
         return round(pi, 1), round(pi2, 1), max(y) - min(y)
     else:
-        plt.axvline(pi_gain, ls="--", c="red", label=f"$\pi$ gain={pi_gain:.1f}")
-        plt.axvline(pi2_gain, ls="--", c="red", label=f"$\pi$ gain={(pi2_gain):.1f}")
+        plt.axvline(pi_gain, ls="--", c="red",
+                    label=f"$\pi$ gain={pi_gain:.1f}")
+        plt.axvline(pi2_gain, ls="--", c="red",
+                    label=f"$\pi$ gain={(pi2_gain):.1f}")
         plt.legend(loc=4)
         plt.tight_layout()
         plt.show()
@@ -318,6 +320,9 @@ def lengthrabi_analyze(x: float, y: float, fit: bool = True, normalize: bool = F
         plt.ylabel("Population", fontsize=15)
         plt.axvline(pi, ls="--", c="red", label=f"$\pi$ len={pi}")
         plt.axvline(pi2, ls="--", c="red", label=f"$\pi/2$ len={pi2}")
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
         return pi, pi2
     else:
         plt.axvline(
@@ -326,10 +331,10 @@ def lengthrabi_analyze(x: float, y: float, fit: bool = True, normalize: bool = F
         plt.axvline(
             pi2_length, ls="--", c="red", label=f"$\pi$ length={pi2_length:.3f}$\mu$s"
         )
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
         return pi_length, pi2_length
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
 
 
 def T1_analyze(x: float, y: float, fit: bool = True, normalize: bool = False):
@@ -467,7 +472,8 @@ def calculate_histogram(X0, X1):
 
 def calculate_threshold(bins, hist0, hist1):
     contrast = np.abs(
-        (np.cumsum(hist0) - np.cumsum(hist1)) / (0.5 * hist0.sum() + 0.5 * hist1.sum())
+        (np.cumsum(hist0) - np.cumsum(hist1)) /
+        (0.5 * hist0.sum() + 0.5 * hist1.sum())
     )
 
     tind = np.argmax(contrast)
@@ -481,8 +487,10 @@ def plot_histogram2(bins, hist0, hist1, param0, param1, threshold):
     _, ax = plt.subplots()
 
     # plot histogram and threshold
-    ax.bar(bins[:-1], hist0, width=bins[1] - bins[0], alpha=0.5, label="State 0")
-    ax.bar(bins[:-1], hist1, width=bins[1] - bins[0], alpha=0.5, label="State 1")
+    ax.bar(bins[:-1], hist0, width=bins[1] -
+           bins[0], alpha=0.5, label="State 0")
+    ax.bar(bins[:-1], hist1, width=bins[1] -
+           bins[0], alpha=0.5, label="State 1")
     ax.axvline(threshold, color="black", linestyle="--", label="Threshold")
 
     # plot fitting curve
