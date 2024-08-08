@@ -148,10 +148,9 @@ def spectrum_analyze(x: float, y: float, fit: bool = True) -> float:
     if fit == True:
         plt.plot(x, lorfunc(x, *pOpt), label='fit')
         plt.axvline(res, color='r', ls='--', label=f'$f_res$ = {res:.2f}')
-        return round(res, 2)
-
     plt.legend()
     plt.show()
+    return round(res, 2)
 
 
 def dispersive_analyze(x: float, y1: float, y2: float, fit: bool = True):
@@ -305,16 +304,19 @@ def lengthrabi_analyze(x: float, y: float, fit: bool = True, normalize: bool = F
         plt.ylabel('Population', fontsize=15)
         plt.axvline(pi, ls='--', c='red', label=f'$\pi$ len={pi}')
         plt.axvline(pi2, ls='--', c='red', label=f'$\pi/2$ len={pi2}')
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
         return pi, pi2
     else:
         plt.axvline(pi_length, ls='--', c='red',
                     label=f'$\pi$ length={pi_length:.3f}$\mu$s')
         plt.axvline(pi2_length, ls='--', c='red',
                     label=f'$\pi$ length={pi2_length:.3f}$\mu$s')
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
         return pi_length, pi2_length
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
 
 
 def T1_analyze(x: float, y: float, fit: bool = True, normalize: bool = False):
