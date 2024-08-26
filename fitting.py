@@ -267,7 +267,7 @@ def fittwolor(xdata, ydata, fitparams=None):
     pOpt = fitparams
     pCov = np.full(shape=(len(fitparams), len(fitparams)), fill_value=np.inf)
     try:
-        pOpt, pCov = sp.curve_fit(twolorfunc, xdata, ydata, p0=fitparams)
+        pOpt, pCov = sp.optimize.curve_fit(twolorfunc, xdata, ydata, p0=fitparams)
     except RuntimeError:
         print("Warning: fit failed!")
     return pOpt, pCov
@@ -320,7 +320,7 @@ def fitthreelor(xdata, ydata, fitparams=None):
     pOpt = fitparams
     pCov = np.full(shape=(len(fitparams), len(fitparams)), fill_value=np.inf)
     try:
-        pOpt, pCov = sp.curve_fit(threelorfunc, xdata, ydata, p0=fitparams)
+        pOpt, pCov = sp.optimize.curve_fit(threelorfunc, xdata, ydata, p0=fitparams)
     except RuntimeError:
         print("Warning: fit failed!")
     return pOpt, pCov
