@@ -678,19 +678,44 @@ def hist(data, plot=True, span=None, verbose=True, title=None, fid_avg=False, b_
         """
         )
 
+    
     if b_plot:
-        plt.figure()
-        plt.imshow(np.array([[gg, ge], [eg, ee]]))
-        plt.xticks([0, 1], labels=["|g>", "|e>"])
-        plt.yticks([0, 1], labels=["|g>", "|e>"])
-        plt.ylabel("Prepared")
-        plt.xlabel("Measured")
-        plt.text(0, 0, f"{gg:.1f}%", ha="center", va="center", color="k")
-        plt.text(1, 0, f"{ge:.1f}%", ha="center", va="center", color="w")
-        plt.text(0, 1, f"{eg:.1f}%", ha="center", va="center", color="w")
-        plt.text(1, 1, f"{ee:.1f}%", ha="center", va="center", color="k")
-        plt.title("Fidelities")
-        plt.show()
+        axs[0, 2].imshow(np.array([[gg, ge], [eg, ee]]))
+        axs[0, 2].set_xticks([0, 1])
+        axs[0, 2].set_yticks([0, 1])
+        axs[0, 2].set_xticklabels(labels=["|g>", "|e>"])
+        axs[0, 2].set_yticklabels(labels=["|g>", "|e>"])
+        axs[0, 2].set_ylabel("Prepared")
+        axs[0, 2].set_xlabel("Measured")
+        axs[0, 2].text(0, 0, f"{gg:.1f}%", ha="center", va="center", color="k")
+        axs[0, 2].text(1, 0, f"{ge:.1f}%", ha="center", va="center", color="w")
+        axs[0, 2].text(0, 1, f"{eg:.1f}%", ha="center", va="center", color="w")
+        axs[0, 2].text(1, 1, f"{ee:.1f}%", ha="center", va="center", color="k")
+        axs[0, 2].set_title("Fidelities")
+
+        # lower right text setting
+        text_kwargs = dict(ha='center', va='center', fontsize=12)
+        axs[1, 2].text(0.45, 0.5, f"""
+        Fidelity Matrix:
+        -----------------
+        | {gg:.3f}% | {ge:.3f}% |
+        ----------------
+        | {eg:.3f}% | {ee:.3f}% |
+        -----------------
+        IQ plane rotated by: {180 / np.pi * theta:.1f}{chr(176)}
+        Threshold: {thresholds[0]:.3e}
+        Fidelity: {100*fids[0]:.3f}%
+        """, **text_kwargs)
+        axs[1, 2].spines['right'].set_color('none')
+        axs[1, 2].spines['left'].set_color('none')
+        axs[1, 2].spines['bottom'].set_color('none')
+        axs[1, 2].spines['top'].set_color('none')
+        axs[1, 2].set_xticks([])
+        axs[1, 2].set_yticks([])
+
+    plt.subplots_adjust(hspace=0.25, wspace=0.15)
+    plt.tight_layout()
+    plt.show()
     return fids, thresholds, theta*180/np.pi  # fids: ge, gf, ef
 
 if __name__ == "__main__":
