@@ -442,7 +442,7 @@ def T2e_analyze(x: float, y: float, fit: bool = True, normalize: bool = False):
     plt.tight_layout()
     plt.show()
 
-def hist(data, plot=True, span=None, verbose=True, title=None, fid_avg=False, b_print=True):
+def hist(data, plot=True, span=None, verbose=True, title=None, fid_avg=False, b_print=True, b_plot=True):
     """
     span: histogram limit is the mean +/- span
     fid_avg: if True, calculate fidelity F by the average mis-categorized e/g; otherwise count
@@ -699,6 +699,19 @@ def hist(data, plot=True, span=None, verbose=True, title=None, fid_avg=False, b_
         """
         )
 
+    if b_plot:
+        plt.figure()
+        plt.imshow(np.array([[gg, ge], [eg, ee]]))
+        plt.xticks([0, 1], labels=["|g>", "|e>"])
+        plt.yticks([0, 1], labels=["|g>", "|e>"])
+        plt.ylabel("Prepared")
+        plt.xlabel("Measured")
+        plt.text(0, 0, f"{gg:.1f}%", ha="center", va="center", color="k")
+        plt.text(1, 0, f"{ge:.1f}%", ha="center", va="center", color="w")
+        plt.text(0, 1, f"{eg:.1f}%", ha="center", va="center", color="w")
+        plt.text(1, 1, f"{ee:.1f}%", ha="center", va="center", color="k")
+        plt.title("Fidelities")
+        plt.show()
     return fids, thresholds, theta*180/np.pi  # fids: ge, gf, ef
     
 # load data
