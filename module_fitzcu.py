@@ -421,6 +421,278 @@ def T2e_analyze(x: float, y: float, fit: bool = True, normalize: bool = False):
     plt.show()
 
 
+def hist(data, plot=True, span=None, verbose=True, title=None, fid_avg=False, b_print=True, b_plot=True):
+    """
+    span: histogram limit is the mean +/- span
+    fid_avg: if True, calculate fidelity F by the average mis-categorized e/g; otherwise count
+        total number of miscategorized over total counts (gives F^2)
+    """
+    Ig = data['Ig']
+    Qg = data['Qg']
+    Ie = data['Ie']
+    Qe = data['Qe']
+    plot_f = False
+    if 'If' in data.keys():
+        plot_f = True
+        If = data['If']
+        Qf = data['Qf']
+
+    numbins = 200
+
+    xg, yg = np.median(Ig), np.median(Qg)
+    xe, ye = np.median(Ie), np.median(Qe)
+    if plot_f:
+        xf, yf = np.median(If), np.median(Qf)
+
+    if verbose:
+        print('Unrotated:')
+        print(f'Ig {xg} +/- {np.std(Ig)} \t Qg {yg} +/- {np.std(Qg)} \t Amp g {np.abs(xg+1j*yg)} +/- {np.std(np.abs(Ig + 1j*Qg))}')
+        print(f'Ie {xe} +/- {np.std(Ie)} \t Qe {ye} +/- {np.std(Qe)} \t Amp e {np.abs(xe+1j*ye)} +/- {np.std(np.abs(Ig + 1j*Qe))}')
+        if plot_f:
+            print(
+                f'If {xf} +/- {np.std(If)} \t Qf {yf} +/- {np.std(Qf)} \t Amp f {np.abs(xf+1j*yf)}')
+
+    if plot:
+        fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(8, 6))
+        if title is not None:
+            plt.suptitle(title)
+        fig.tight_layout()
+
+        axs[0, 0].scatter(Ig, Qg, label='g', color='b',
+                          marker='.', edgecolor='None', alpha=0.2)
+        axs[0, 0].scatter(Ie, Qe, label='e', color='r',
+                          marker='.', edgecolor='None', alpha=0.2)
+        if plot_f:
+            axs[0, 0].scatter(If, Qf, label='f', color='g',
+                              marker='.', edgecolor='None', alpha=0.2)
+        axs[0, 0].plot([xg], [yg], color='k', linestyle=':',
+                       marker='o', markerfacecolor='b', markersize=5)
+        axs[0, 0].plot([xe], [ye], color='k', linestyle=':',
+                       marker='o', markerfacecolor='r', markersize=5)
+        if plot_f:
+            axs[0, 0].plot([xf], [yf], color='k', linestyle=':',
+                           marker='o', markerfacecolor='g', markersize=5)
+
+        # axs[0,0].set_xlabel('I [ADC levels]')
+        axs[0, 0].set_ylabel('Q [ADC levels]')
+        axs[0, 0].legend(loc='upper right')
+        axs[0, 0].set_title('Unrotated', fontsize=14)
+        axs[0, 0].axis('equal')
+
+    """Compute the rotation angle"""
+    theta = -np.arctan2((ye-yg), (xe-xg))
+    if plot_f:
+        theta = -np.arctan2((yf-yg), (xf-xg))
+
+    """
+    Adjust rotation angle
+    """
+    best_theta = theta
+    I_tot = np.concatenate((Ie, Ig))
+    span = (np.max(I_tot) - np.min(I_tot))/2
+    midpoint = (np.max(I_tot) + np.min(I_tot))/2
+    xlims = [midpoint-span, midpoint+span]
+    ng, binsg = np.histogram(Ig, bins=numbins, range=xlims)
+    ne, binse = np.histogram(Ie, bins=numbins, range=xlims)
+    contrast = np.abs(((np.cumsum(ng) - np.cumsum(ne)) /
+                      (0.5*ng.sum() + 0.5*ne.sum())))
+    best_fid = np.max(contrast)
+    for theta_i in np.linspace(theta-np.pi/12, theta + np.pi/12, 10):
+        Ig_new = Ig*np.cos(theta_i) - Qg*np.sin(theta_i)
+        Qg_new = Ig*np.sin(theta) + Qg*np.cos(theta)
+        Ie_new = Ie*np.cos(theta_i) - Qe*np.sin(theta_i)
+        Qe_new = Ie*np.sin(theta) + Qe*np.cos(theta)
+        xg, yg = np.median(Ig_new), np.median(Qg_new)
+        xe, ye = np.median(Ie_new), np.median(Qe_new)
+        I_tot_new = np.concatenate((Ie_new, Ig_new))
+        span = (np.max(I_tot_new) - np.min(I_tot_new))/2
+        midpoint = (np.max(I_tot_new) + np.min(I_tot_new))/2
+        xlims = [midpoint-span, midpoint+span]
+        ng, binsg = np.histogram(Ig_new, bins=numbins, range=xlims)
+        ne, binse = np.histogram(Ie_new, bins=numbins, range=xlims)
+        contrast = np.abs(((np.cumsum(ng) - np.cumsum(ne)) /
+                          (0.5*ng.sum() + 0.5*ne.sum())))
+        fid = np.max(contrast)
+        if fid > best_fid:
+            best_theta = theta_i
+            best_fid = fid
+    theta = best_theta
+
+    """Rotate the IQ data"""
+    Ig_new = Ig*np.cos(theta) - Qg*np.sin(theta)
+    Qg_new = Ig*np.sin(theta) + Qg*np.cos(theta)
+
+    Ie_new = Ie*np.cos(theta) - Qe*np.sin(theta)
+    Qe_new = Ie*np.sin(theta) + Qe*np.cos(theta)
+
+    if plot_f:
+        If_new = If*np.cos(theta) - Qf*np.sin(theta)
+        Qf_new = If*np.sin(theta) + Qf*np.cos(theta)
+
+    """New means of each blob"""
+    xg, yg = np.median(Ig_new), np.median(Qg_new)
+    xe, ye = np.median(Ie_new), np.median(Qe_new)
+    if plot_f:
+        xf, yf = np.median(If_new), np.median(Qf_new)
+    if verbose:
+        print('Rotated:')
+        print(f'Ig {xg} +/- {np.std(Ig)} \t Qg {yg} +/- {np.std(Qg)} \t Amp g {np.abs(xg+1j*yg)} +/- {np.std(np.abs(Ig + 1j*Qg))}')
+        print(f'Ie {xe} +/- {np.std(Ie)} \t Qe {ye} +/- {np.std(Qe)} \t Amp e {np.abs(xe+1j*ye)} +/- {np.std(np.abs(Ig + 1j*Qe))}')
+        if plot_f:
+            print(
+                f'If {xf} +/- {np.std(If)} \t Qf {yf} +/- {np.std(Qf)} \t Amp f {np.abs(xf+1j*yf)}')
+
+    if span is None:
+        span = (np.max(np.concatenate((Ie_new, Ig_new))) -
+                np.min(np.concatenate((Ie_new, Ig_new))))/2
+    xlims = [(xg+xe)/2-span, (xg+xe)/2+span]
+
+    if plot:
+        axs[0, 1].scatter(Ig_new, Qg_new, label='g', color='b',
+                          marker='.', edgecolor='None', alpha=0.3)
+        axs[0, 1].scatter(Ie_new, Qe_new, label='e', color='r',
+                          marker='.', edgecolor='None', alpha=0.3)
+        if plot_f:
+            axs[0, 1].scatter(If_new, Qf_new, label='f', color='g',
+                              marker='.', edgecolor='None', alpha=0.3)
+        axs[0, 1].plot([xg], [yg], color='k', linestyle=':',
+                       marker='o', markerfacecolor='b', markersize=5)
+        axs[0, 1].plot([xe], [ye], color='k', linestyle=':',
+                       marker='o', markerfacecolor='r', markersize=5)
+        if plot_f:
+            axs[0, 1].plot([xf], [yf], color='k', linestyle=':',
+                           marker='o', markerfacecolor='g', markersize=5)
+
+        # axs[0,1].set_xlabel('I [ADC levels]')
+        axs[0, 1].legend(loc='upper right')
+        axs[0, 1].set_title('Rotated', fontsize=14)
+        axs[0, 1].axis('equal')
+
+        """X and Y ranges for histogram"""
+
+        ng, binsg, pg = axs[1, 0].hist(
+            Ig_new, bins=numbins, range=xlims, color='b', label='g', alpha=0.5)
+        ne, binse, pe = axs[1, 0].hist(
+            Ie_new, bins=numbins, range=xlims, color='r', label='e', alpha=0.5)
+        if plot_f:
+            nf, binsf, pf = axs[1, 0].hist(
+                If_new, bins=numbins, range=xlims, color='g', label='f', alpha=0.5)
+        axs[1, 0].set_ylabel('Counts', fontsize=14)
+        axs[1, 0].set_xlabel('I [ADC levels]', fontsize=14)
+        axs[1, 0].legend(loc='upper right')
+
+    else:
+        ng, binsg = np.histogram(Ig_new, bins=numbins, range=xlims)
+        ne, binse = np.histogram(Ie_new, bins=numbins, range=xlims)
+        if plot_f:
+            nf, binsf = np.histogram(If_new, bins=numbins, range=xlims)
+
+    """fitting the shot gaussian"""
+    # poptg, _ = fitdualgauss(binsg[:-1], ng)
+    # popte, _ = fitdualgauss(binse[:-1], ne)
+    # fitg = dualgauss(binsg[:-1], *poptg)
+    # fite = dualgauss(binse[:-1], *popte)
+    # axs[1, 0].plot(binsg[:-1], fitg)
+    # axs[1, 0].plot(binsg[:-1], fite)
+    """Compute the fidelity using overlap of the histograms"""
+    fids = []
+    thresholds = []
+    # this method calculates fidelity as 1-2(Neg + Nge)/N
+    contrast = np.abs(((np.cumsum(ng) - np.cumsum(ne)) /
+                      (0.5*ng.sum() + 0.5*ne.sum())))
+    tind = contrast.argmax()
+    thresholds.append(binsg[tind])
+
+    if not fid_avg:
+        fids.append(contrast[tind])
+    else:
+        # this method calculates fidelity as (Ngg+Nee)/N = Ngg/N + Nee/N=(0.5N-Nge)/N + (0.5N-Neg)/N = 1-(Nge+Neg)/N
+        fids.append(0.5*(1-ng[tind:].sum()/ng.sum() +
+                    1-ne[:tind].sum()/ne.sum()))
+    if verbose:
+        print(f'g correctly categorized: {100*(1-ng[tind:].sum()/ng.sum())}%')
+        print(f'e correctly categorized: {100*(1-ne[:tind].sum()/ne.sum())}%')
+
+    if plot_f:
+        contrast = np.abs(((np.cumsum(ng) - np.cumsum(nf)) /
+                          (0.5*ng.sum() + 0.5*nf.sum())))
+        tind = contrast.argmax()
+        thresholds.append(binsg[tind])
+        if not fid_avg:
+            fids.append(contrast[tind])
+        else:
+            fids.append(
+                0.5*(1-ng[tind:].sum()/ng.sum() + 1-nf[:tind].sum()/nf.sum()))
+
+        contrast = np.abs(((np.cumsum(ne) - np.cumsum(nf)) /
+                          (0.5*ne.sum() + 0.5*nf.sum())))
+        tind = contrast.argmax()
+        thresholds.append(binsg[tind])
+        if not fid_avg:
+            fids.append(contrast[tind])
+        else:
+            fids.append(
+                0.5*(1-ne[tind:].sum()/ne.sum() + 1-nf[:tind].sum()/nf.sum()))
+
+    if plot:
+        title = '$\overline{F}_{ge}$' if fid_avg else '$F_{ge}$'
+        axs[1, 0].set_title(
+            f'Histogram ({title}: {100*fids[0]:.3}%)', fontsize=14)
+        axs[1, 0].axvline(thresholds[0], color='0.2', linestyle='--')
+        if plot_f:
+            axs[1, 0].axvline(thresholds[1], color='0.2', linestyle='--')
+            axs[1, 0].axvline(thresholds[2], color='0.2', linestyle='--')
+
+        axs[1, 1].set_title('Cumulative Counts', fontsize=14)
+        axs[1, 1].plot(binsg[:-1], np.cumsum(ng), 'b', label='g')
+        axs[1, 1].plot(binse[:-1], np.cumsum(ne), 'r', label='e')
+        axs[1, 1].axvline(thresholds[0], color='0.2', linestyle='--')
+        if plot_f:
+            axs[1, 1].plot(binsf[:-1], np.cumsum(nf), 'g', label='f')
+            axs[1, 1].axvline(thresholds[1], color='0.2', linestyle='--')
+            axs[1, 1].axvline(thresholds[2], color='0.2', linestyle='--')
+        axs[1, 1].legend()
+        axs[1, 1].set_xlabel('I [ADC levels]', fontsize=14)
+
+        plt.subplots_adjust(hspace=0.25, wspace=0.15)
+        plt.tight_layout()
+        plt.show()
+
+    gg = 100*(1-ng[tind:].sum()/ng.sum())
+    ge = 100*(ng[tind:].sum()/ng.sum())
+    eg = 100*(1-ne[tind:].sum()/ng.sum())
+    ee = 100*(ne[tind:].sum()/ng.sum())
+
+    if b_print:
+        print(
+            f"""
+        Fidelity Matrix:
+        -----------------
+        | {gg:.3f}% | {ge:.3f}% |
+        ----------------
+        | {eg:.3f}% | {ee:.3f}% |
+        -----------------
+        IQ plane rotated by: {180 / np.pi * theta:.1f}{chr(176)}
+        Threshold: {thresholds[0]:.3e}
+        Fidelity: {100*fids[0]:.3f}%
+        """
+        )
+
+    if b_plot:
+        plt.figure()
+        plt.imshow(np.array([[gg, ge], [eg, ee]]))
+        plt.xticks([0, 1], labels=["|g>", "|e>"])
+        plt.yticks([0, 1], labels=["|g>", "|e>"])
+        plt.ylabel("Prepared")
+        plt.xlabel("Measured")
+        plt.text(0, 0, f"{gg:.1f}%", ha="center", va="center", color="k")
+        plt.text(1, 0, f"{ge:.1f}%", ha="center", va="center", color="w")
+        plt.text(0, 1, f"{eg:.1f}%", ha="center", va="center", color="w")
+        plt.text(1, 1, f"{ee:.1f}%", ha="center", va="center", color="k")
+        plt.title("Fidelities")
+        plt.show()
+    return fids, thresholds, theta*180/np.pi  # fids: ge, gf, ef
+
 if __name__ == "__main__":
     import sys
     import os
