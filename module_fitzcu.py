@@ -685,13 +685,13 @@ def hist(data, plot=True, span=None, verbose=True, title=None, fid_avg=False, b_
         axs[0, 2].set_yticks([0, 1])
         axs[0, 2].set_xticklabels(labels=["|g>", "|e>"])
         axs[0, 2].set_yticklabels(labels=["|g>", "|e>"])
-        axs[0, 2].set_ylabel("Prepared")
-        axs[0, 2].set_xlabel("Measured")
+        axs[0, 2].set_ylabel("Prepared", fontsize=14)
+        axs[0, 2].set_xlabel("Measured", fontsize=14)
         axs[0, 2].text(0, 0, f"{gg:.1f}%", ha="center", va="center", color="k")
         axs[0, 2].text(1, 0, f"{ge:.1f}%", ha="center", va="center", color="w")
         axs[0, 2].text(0, 1, f"{eg:.1f}%", ha="center", va="center", color="w")
         axs[0, 2].text(1, 1, f"{ee:.1f}%", ha="center", va="center", color="k")
-        axs[0, 2].set_title("Fidelities")
+        axs[0, 2].set_title("Fidelities", fontsize=14)
 
         # lower right text setting
         text_kwargs = dict(ha='center', va='center', fontsize=12)
