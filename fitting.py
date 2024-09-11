@@ -486,6 +486,41 @@ def fitdecaysin(xdata, ydata, fitparams=None):
     return pOpt, pCov
 
 
+def fitampdecaysin(xdata, ydata, fitparams=None):
+    if fitparams is None: fitparams = [None]*5
+    else: fitparams = np.copy(fitparams)
+    fourier = np.fft.fft(ydata)
+    fft_freqs = np.fft.fftfreq(len(ydata), d=xdata[1]-xdata[0])
+    fft_phases = np.angle(fourier)
+    sorted_fourier = np.sort(fourier)
+    max_ind = np.argwhere(fourier == sorted_fourier[-1])[0][0]
+    if max_ind == 0:
+        max_ind = np.argwhere(fourier == sorted_fourier[-2])[0][0]
+    max_freq = np.abs(fft_freqs[max_ind])
+    max_phase = fft_phases[max_ind]
+    if fitparams[0] is None: fitparams[0]=(max(ydata)-min(ydata))/2
+    if fitparams[1] is None: fitparams[1]=max_freq
+    # if fitparams[2] is None: fitparams[2]=0
+    if fitparams[2] is None: fitparams[2]=max_phase*180/np.pi
+    if fitparams[3] is None: fitparams[3]=max(xdata) - min(xdata)
+    if fitparams[4] is None: fitparams[4]=np.mean(ydata)
+    bounds = (
+        [0.75*fitparams[0], 0.1/(max(xdata)-min(xdata)), -360, 1e5, np.min(ydata)],
+        [1.25*fitparams[0], 30/(max(xdata)-min(xdata)), 360, 1e10, np.max(ydata)]
+        )
+    for i, param in enumerate(fitparams):
+        if not (bounds[0][i] < param < bounds[1][i]):
+            fitparams[i] = np.mean((bounds[0][i], bounds[1][i]))
+            print(f'Attempted to init fitparam {i} to {param}, which is out of bounds {bounds[0][i]} to {bounds[1][i]}. Instead init to {fitparams[i]}')
+    pOpt = fitparams
+    pCov = np.full(shape=(len(fitparams), len(fitparams)), fill_value=np.inf)
+    try:
+        pOpt, pCov = sp.optimize.curve_fit(decaysin, xdata, ydata, p0=fitparams, bounds=bounds)
+        # return pOpt, pCov
+    except RuntimeError: 
+        print('Warning: fit failed!')
+        # return 0, 0
+    return pOpt, pCov
 # ====================================================== #
 # T2 ramsey modify with 1/f noise type, check [A Quantum Engineer’s Guide to Superconducting Qubits]
 def decaysinmod(x, *p):
