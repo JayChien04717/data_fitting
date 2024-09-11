@@ -216,7 +216,7 @@ def amprabi_analyze(x: int, y: float, fit: bool = True, normalize: bool = False,
         return the pi pulse gain, pi/2 pulse gain and max value minus min value
     """
     y = np.abs(y)
-    pOpt, pCov = fitampdecaysin(x, y)
+    pOpt, pCov = fitampdecaysin(x, y, p0=p0)
     sim = decaysin(x, *pOpt)
 
     pi = round(x[np.argmax(sim)], 1)
