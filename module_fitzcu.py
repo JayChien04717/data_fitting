@@ -350,7 +350,7 @@ def T1_analyze(x: float, y: float, fit: bool = True, normalize: bool = False):
     plt.show()
 
 
-def T2r_analyze(x: float, y: float, fit: bool = True, normalize: bool = False):
+def T2fring_analyze(x: float, y: float, fit: bool = True, normalize: bool = False):
     """T2 ramsey analyze
 
     Parameters
@@ -379,7 +379,7 @@ def T2r_analyze(x: float, y: float, fit: bool = True, normalize: bool = False):
     if fit == True:
         plt.plot(x, sim, label='fit')
     plt.title(
-        f'T2r = {pOpt[3]:.2f}$\mu s, detune = {pOpt[1]:.2f}MHz \pm {(error[1])*1e3:.2f}kHz$', fontsize=15)
+        f'T2 fringe = {pOpt[3]:.2f}$\mu s, detune = {pOpt[1]:.2f}MHz \pm {(error[1])*1e3:.2f}kHz$', fontsize=15)
     plt.xlabel('$t\ (\mu s)$', fontsize=15)
     if normalize == True:
         plt.ylabel('Population', fontsize=15)
@@ -389,7 +389,7 @@ def T2r_analyze(x: float, y: float, fit: bool = True, normalize: bool = False):
     return pOpt[1]
 
 
-def T2e_analyze(x: float, y: float, fit: bool = True, normalize: bool = False):
+def T2decay_analyze(x: float, y: float, fit: bool = True, normalize: bool = False):
     """_summary_
 
     Parameters
@@ -412,13 +412,14 @@ def T2e_analyze(x: float, y: float, fit: bool = True, normalize: bool = False):
     plt.plot(x, y, label='meas', ls='-', marker='o', markersize=3)
     if fit == True:
         plt.plot(x, sim, label='fit')
-    plt.title(f'T2e = {pOpt[3]:.2f}$\mu s$', fontsize=15)
+    plt.title(f'T2 decay = {pOpt[3]:.2f}$\mu s$', fontsize=15)
     plt.xlabel('$t\ (\mu s)$', fontsize=15)
     if normalize == True:
         plt.ylabel('Population', fontsize=15)
     plt.legend()
     plt.tight_layout()
     plt.show()
+
 
 
 def hist(data, plot=True, span=None, verbose=True, title=None, fid_avg=False, b_print=True, b_plot=True):
