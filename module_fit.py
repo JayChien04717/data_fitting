@@ -211,7 +211,7 @@ def dispersive_analyze(x: float, y1: float, y2: float, fit: bool = True):
     plt.show()
 
 
-def amprabi_analyze(x: int, y: float, fit: bool = True, normalize: bool = False):
+def amprabi_analyze(x: int, y: float, fit: bool = True, normalize: bool = False, p0=[None, None, None, 1e10, None]):
     """Analyze and fit the amplitude Rabi
 
     Parameters
@@ -231,7 +231,7 @@ def amprabi_analyze(x: int, y: float, fit: bool = True, normalize: bool = False)
         return the pi pulse gain, pi/2 pulse gain and max value minus min value
     """
     y = np.abs(y)
-    pOpt, pCov = fitdecaysin(x, y, [None, None, None, 1e5, None])
+    pOpt, pCov = fitampdecaysin(x, y,p0=p0)
     sim = decaysin(x, *pOpt)
 
     pi = round(x[np.argmax(sim)], 1)
