@@ -368,7 +368,7 @@ def lengthrabi_analyze(x: float, y: float, fit: bool = True, normalize: bool = F
             pi_length, ls="--", c="red", label=f"$\pi$ length={pi_length:.3f}$\mu$s"
         )
         plt.axvline(
-            pi2_length, ls="--", c="red", label=f"$\pi$ length={pi2_length:.3f}$\mu$s"
+            pi2_length, ls="--", c="red", label=f"$\pi/2$ length={pi2_length:.3f}$\mu$s"
         )
         plt.legend()
         plt.tight_layout()
@@ -408,7 +408,7 @@ def T1_analyze(x: float, y: float, fit: bool = True, normalize: bool = False):
     plt.show()
 
 
-def T2r_analyze(x: float, y: float, fit: bool = True, normalize: bool = False):
+def T2fring_analyze(x: float, y: float, fit: bool = True, normalize: bool = False):
     """T2 ramsey analyze
 
     Parameters
@@ -428,29 +428,26 @@ def T2r_analyze(x: float, y: float, fit: bool = True, normalize: bool = False):
         Detuning frequency
     """
     y = np.abs(y)
-    pOpt, pCov = fitdecaysinmod(x, y)
-    sim = decaysinmod(x, *pOpt)
+    pOpt, pCov = fitdecaysin(x, y)
+    sim = decaysin(x, *pOpt)
     error = np.sqrt(np.diag(pCov))
-    r_square = rsquare(y, sim)
 
     plt.figure(figsize=figsize)
-    plt.plot(x, y, label="meas", ls="-", marker="s", markersize=5)
+    plt.plot(x, y, label='meas', ls='-', marker='o', markersize=3)
     if fit == True:
-        plt.plot(x, sim, label=f"fit, R square = {r_square:.2f}")
+        plt.plot(x, sim, label='fit')
     plt.title(
-        f"T2r = {pOpt[3]*1e6:.2f}$\mu s, detune = {pOpt[1]/1e6:.2f}MHz \pm {(error[1])/1e3:.2f}kHz$",
-        fontsize=15,
-    )
-    plt.xlabel("$t\ (\mu s)$", fontsize=15)
+        f'T2 fringe = {pOpt[3]:.2f}$\mu s, detune = {pOpt[1]:.2f}MHz \pm {(error[1])*1e3:.2f}kHz$', fontsize=15)
+    plt.xlabel('$t\ (\mu s)$', fontsize=15)
     if normalize == True:
-        plt.ylabel("Population", fontsize=15)
+        plt.ylabel('Population', fontsize=15)
     plt.legend()
     plt.tight_layout()
     plt.show()
     return pOpt[1]
 
 
-def T2e_analyze(x: float, y: float, fit: bool = True, normalize: bool = False):
+def T2decay_analyze(x: float, y: float, fit: bool = True, normalize: bool = False):
     """_summary_
 
     Parameters
@@ -468,51 +465,50 @@ def T2e_analyze(x: float, y: float, fit: bool = True, normalize: bool = False):
     y = np.abs(y)
     pOpt, pCov = fitexp(x, y)
     sim = expfunc(x, *pOpt)
-    r_square = rsquare(y, sim)
 
     plt.figure(figsize=figsize)
-    plt.plot(x, y, label="meas", ls="-", marker="s", markersize=5)
+    plt.plot(x, y, label='meas', ls='-', marker='o', markersize=3)
     if fit == True:
-        plt.plot(x, sim, label=f"fit, R square = {r_square:.2f}")
-    plt.title(f"T2e = {pOpt[3]:.2f}$\mu s$", fontsize=15)
-    plt.xlabel("$t\ (\mu s)$", fontsize=15)
+        plt.plot(x, sim, label='fit')
+    plt.title(f'T2 decay = {pOpt[3]:.2f}$\mu s$', fontsize=15)
+    plt.xlabel('$t\ (\mu s)$', fontsize=15)
     if normalize == True:
-        plt.ylabel("Population", fontsize=15)
+        plt.ylabel('Population', fontsize=15)
     plt.legend()
     plt.tight_layout()
     plt.show()
 
 
-def hist(data, plot=True, span=None, verbose=True, title=None, fid_avg=False, b_print=True, b_plot=True):
+def hist(data, plot=True, span=None, verbose=True, title=None, fid_avg=False, b_print=False, b_plot=False):
     """
     span: histogram limit is the mean +/- span
     fid_avg: if True, calculate fidelity F by the average mis-categorized e/g; otherwise count
         total number of miscategorized over total counts (gives F^2)
     """
-    Ig = data['Ig']
-    Qg = data['Qg']
-    Ie = data['Ie']
-    Qe = data['Qe']
+    Ig = data[0]
+    Qg = data[1]
+    Ie = data[2]
+    Qe = data[3]
     plot_f = False
-    if 'If' in data.keys():
-        plot_f = True
-        If = data['If']
-        Qf = data['Qf']
+    # if 'If' in data.keys():
+    #     plot_f = True
+    #     If = data[4]
+    #     Qf = data[5]
 
     numbins = 200
 
     xg, yg = np.median(Ig), np.median(Qg)
     xe, ye = np.median(Ie), np.median(Qe)
-    if plot_f:
-        xf, yf = np.median(If), np.median(Qf)
+    # if plot_f:
+    #     xf, yf = np.median(If), np.median(Qf)
 
     if verbose:
         print('Unrotated:')
         print(f'Ig {xg} +/- {np.std(Ig)} \t Qg {yg} +/- {np.std(Qg)} \t Amp g {np.abs(xg+1j*yg)} +/- {np.std(np.abs(Ig + 1j*Qg))}')
         print(f'Ie {xe} +/- {np.std(Ie)} \t Qe {ye} +/- {np.std(Qe)} \t Amp e {np.abs(xe+1j*ye)} +/- {np.std(np.abs(Ig + 1j*Qe))}')
-        if plot_f:
-            print(
-                f'If {xf} +/- {np.std(If)} \t Qf {yf} +/- {np.std(Qf)} \t Amp f {np.abs(xf+1j*yf)}')
+        # if plot_f:
+        #     print(
+        #         f'If {xf} +/- {np.std(If)} \t Qf {yf} +/- {np.std(Qf)} \t Amp f {np.abs(xf+1j*yf)}')
 
     if plot:
         fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(8, 6))
@@ -587,22 +583,22 @@ def hist(data, plot=True, span=None, verbose=True, title=None, fid_avg=False, b_
     Ie_new = Ie*np.cos(theta) - Qe*np.sin(theta)
     Qe_new = Ie*np.sin(theta) + Qe*np.cos(theta)
 
-    if plot_f:
-        If_new = If*np.cos(theta) - Qf*np.sin(theta)
-        Qf_new = If*np.sin(theta) + Qf*np.cos(theta)
+    # if plot_f:
+    #     If_new = If*np.cos(theta) - Qf*np.sin(theta)
+    #     Qf_new = If*np.sin(theta) + Qf*np.cos(theta)
 
     """New means of each blob"""
     xg, yg = np.median(Ig_new), np.median(Qg_new)
     xe, ye = np.median(Ie_new), np.median(Qe_new)
-    if plot_f:
-        xf, yf = np.median(If_new), np.median(Qf_new)
+    # if plot_f:
+    #     xf, yf = np.median(If_new), np.median(Qf_new)
     if verbose:
         print('Rotated:')
         print(f'Ig {xg} +/- {np.std(Ig)} \t Qg {yg} +/- {np.std(Qg)} \t Amp g {np.abs(xg+1j*yg)} +/- {np.std(np.abs(Ig + 1j*Qg))}')
         print(f'Ie {xe} +/- {np.std(Ie)} \t Qe {ye} +/- {np.std(Qe)} \t Amp e {np.abs(xe+1j*ye)} +/- {np.std(np.abs(Ig + 1j*Qe))}')
-        if plot_f:
-            print(
-                f'If {xf} +/- {np.std(If)} \t Qf {yf} +/- {np.std(Qf)} \t Amp f {np.abs(xf+1j*yf)}')
+        # if plot_f:
+        #     print(
+        #         f'If {xf} +/- {np.std(If)} \t Qf {yf} +/- {np.std(Qf)} \t Amp f {np.abs(xf+1j*yf)}')
 
     if span is None:
         span = (np.max(np.concatenate((Ie_new, Ig_new))) -
@@ -614,16 +610,16 @@ def hist(data, plot=True, span=None, verbose=True, title=None, fid_avg=False, b_
                           marker='.', edgecolor='None', alpha=0.3)
         axs[0, 1].scatter(Ie_new, Qe_new, label='e', color='r',
                           marker='.', edgecolor='None', alpha=0.3)
-        if plot_f:
-            axs[0, 1].scatter(If_new, Qf_new, label='f', color='g',
-                              marker='.', edgecolor='None', alpha=0.3)
+        # if plot_f:
+        #     axs[0, 1].scatter(If_new, Qf_new, label='f', color='g',
+        #                       marker='.', edgecolor='None', alpha=0.3)
         axs[0, 1].plot([xg], [yg], color='k', linestyle=':',
                        marker='o', markerfacecolor='b', markersize=5)
         axs[0, 1].plot([xe], [ye], color='k', linestyle=':',
                        marker='o', markerfacecolor='r', markersize=5)
-        if plot_f:
-            axs[0, 1].plot([xf], [yf], color='k', linestyle=':',
-                           marker='o', markerfacecolor='g', markersize=5)
+        # if plot_f:
+        #     axs[0, 1].plot([xf], [yf], color='k', linestyle=':',
+        #                    marker='o', markerfacecolor='g', markersize=5)
 
         # axs[0,1].set_xlabel('I [ADC levels]')
         axs[0, 1].legend(loc='upper right')
@@ -636,9 +632,9 @@ def hist(data, plot=True, span=None, verbose=True, title=None, fid_avg=False, b_
             Ig_new, bins=numbins, range=xlims, color='b', label='g', alpha=0.5)
         ne, binse, pe = axs[1, 0].hist(
             Ie_new, bins=numbins, range=xlims, color='r', label='e', alpha=0.5)
-        if plot_f:
-            nf, binsf, pf = axs[1, 0].hist(
-                If_new, bins=numbins, range=xlims, color='g', label='f', alpha=0.5)
+        # if plot_f:
+        #     nf, binsf, pf = axs[1, 0].hist(
+        #         If_new, bins=numbins, range=xlims, color='g', label='f', alpha=0.5)
         axs[1, 0].set_ylabel('Counts', fontsize=14)
         axs[1, 0].set_xlabel('I [ADC levels]', fontsize=14)
         axs[1, 0].legend(loc='upper right')
@@ -646,8 +642,8 @@ def hist(data, plot=True, span=None, verbose=True, title=None, fid_avg=False, b_
     else:
         ng, binsg = np.histogram(Ig_new, bins=numbins, range=xlims)
         ne, binse = np.histogram(Ie_new, bins=numbins, range=xlims)
-        if plot_f:
-            nf, binsf = np.histogram(If_new, bins=numbins, range=xlims)
+        # if plot_f:
+        #     nf, binsf = np.histogram(If_new, bins=numbins, range=xlims)
 
     """fitting the shot gaussian"""
     # poptg, _ = fitdualgauss(binsg[:-1], ng)
@@ -675,9 +671,9 @@ def hist(data, plot=True, span=None, verbose=True, title=None, fid_avg=False, b_
         print(f'g correctly categorized: {100*(1-ng[tind:].sum()/ng.sum())}%')
         print(f'e correctly categorized: {100*(1-ne[:tind].sum()/ne.sum())}%')
 
-    if plot_f:
-        contrast = np.abs(((np.cumsum(ng) - np.cumsum(nf)) /
-                          (0.5*ng.sum() + 0.5*nf.sum())))
+    # if plot_f:
+    #     contrast = np.abs(((np.cumsum(ng) - np.cumsum(nf)) /
+    #                       (0.5*ng.sum() + 0.5*nf.sum())))
         tind = contrast.argmax()
         thresholds.append(binsg[tind])
         if not fid_avg:
@@ -692,9 +688,9 @@ def hist(data, plot=True, span=None, verbose=True, title=None, fid_avg=False, b_
         thresholds.append(binsg[tind])
         if not fid_avg:
             fids.append(contrast[tind])
-        else:
-            fids.append(
-                0.5*(1-ne[tind:].sum()/ne.sum() + 1-nf[:tind].sum()/nf.sum()))
+        # else:
+        #     fids.append(
+        #         0.5*(1-ne[tind:].sum()/ne.sum() + 1-nf[:tind].sum()/nf.sum()))
 
     if plot:
         title = '$\overline{F}_{ge}$' if fid_avg else '$F_{ge}$'
@@ -710,7 +706,7 @@ def hist(data, plot=True, span=None, verbose=True, title=None, fid_avg=False, b_
         axs[1, 1].plot(binse[:-1], np.cumsum(ne), 'r', label='e')
         axs[1, 1].axvline(thresholds[0], color='0.2', linestyle='--')
         if plot_f:
-            axs[1, 1].plot(binsf[:-1], np.cumsum(nf), 'g', label='f')
+            # axs[1, 1].plot(binsf[:-1], np.cumsum(nf), 'g', label='f')
             axs[1, 1].axvline(thresholds[1], color='0.2', linestyle='--')
             axs[1, 1].axvline(thresholds[2], color='0.2', linestyle='--')
         axs[1, 1].legend()
