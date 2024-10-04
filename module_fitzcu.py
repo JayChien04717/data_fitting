@@ -258,6 +258,43 @@ def amprabi_analyze(x: int, y: float, fit: bool = True, normalize: bool = False,
         return round(pi_gain, 1), round(pi2_gain, 1), max(y)-min(y)
 
 
+def rabichevron(x, y, data):
+    """Analyze and fit the amplitude Rabi
+
+    Parameters
+    ----------
+    x : int
+        gain/power
+    y : float
+        rabi chevron iteration.
+    data : float
+        rabi chevron 2D data
+
+    Returns
+    -------
+    list
+        return the rabi chevron fit pi pulse gain, pi/2 pulse gain and max value minus min value
+    """
+    data = np.abs(data)
+
+    pi=0
+    pi2=0
+    for i in range(len(data)):
+        pi += np.abs(data[i])
+        pi2 += np.abs(data[i])*((-1)**i)
+    pi_gain = (x[np.argmin(np.gradient(np.abs(pi)))] + x[np.argmax(np.gradient(np.abs(pi)))])//2
+    peaks, _ = find_peaks(np.abs(pi2), height=(max(np.abs(pi2)+min(np.abs(pi2)))//2))
+    pi2_gain = x[peaks[0]]
+    
+    plt.pcolormesh(x, y, np.abs(data))
+    plt.title(f'Amplitude Rabi chevron', fontsize=15)
+    plt.axvline(pi_gain, color='r', lw=2, ls='--', label=r'$\pi \quad gain$')
+    plt.axvline(pi2_gain, color='r', lw=2, ls='--', label=r'$\pi /2 \quad gain$')
+    plt.legend()
+    plt.xlabel('$gain$', fontsize=15)
+    return round(pi_gain, 2), round(pi2_gain, 2)
+
+
 def lengthrabi_analyze(x: float, y: float, fit: bool = True, normalize: bool = False):
     """Analyze and fit the length Rabi data
 
