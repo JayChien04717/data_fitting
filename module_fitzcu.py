@@ -259,7 +259,7 @@ def amprabi_analyze(x: int, y: float, fit: bool = True, normalize: bool = False,
 
 
 def rabichevron(x, y, data):
-    """Analyze and fit the amplitude Rabi
+    """Analyze and fit the amplitude Rabi chevron
 
     Parameters
     ----------
@@ -277,19 +277,22 @@ def rabichevron(x, y, data):
     """
     data = np.abs(data)
 
-    pi=0
-    pi2=0
+    pi = 0
+    pi2 = 0
     for i in range(len(data)):
         pi += np.abs(data[i])
         pi2 += np.abs(data[i])*((-1)**i)
-    pi_gain = (x[np.argmin(np.gradient(np.abs(pi)))] + x[np.argmax(np.gradient(np.abs(pi)))])//2
-    peaks, _ = find_peaks(np.abs(pi2), height=(max(np.abs(pi2)+min(np.abs(pi2)))//2))
+    pi_gain = (x[np.argmin(np.gradient(np.abs(pi)))] +
+               x[np.argmax(np.gradient(np.abs(pi)))])//2
+    peaks, _ = sp.signal.find_peaks(
+        np.abs(pi2), height=(max(np.abs(pi2)+min(np.abs(pi2)))//2))
     pi2_gain = x[peaks[0]]
-    
+
     plt.pcolormesh(x, y, np.abs(data))
     plt.title(f'Amplitude Rabi chevron', fontsize=15)
     plt.axvline(pi_gain, color='r', lw=2, ls='--', label=r'$\pi \quad gain$')
-    plt.axvline(pi2_gain, color='r', lw=2, ls='--', label=r'$\pi /2 \quad gain$')
+    plt.axvline(pi2_gain, color='r', lw=2, ls='--',
+                label=r'$\pi /2 \quad gain$')
     plt.legend()
     plt.xlabel('$gain$', fontsize=15)
     return round(pi_gain, 2), round(pi2_gain, 2)
@@ -456,7 +459,6 @@ def T2decay_analyze(x: float, y: float, fit: bool = True, normalize: bool = Fals
     plt.legend()
     plt.tight_layout()
     plt.show()
-
 
 
 def hist(data, plot=True, span=None, verbose=True, title=None, fid_avg=False, b_print=True, b_plot=True):
@@ -716,7 +718,6 @@ def hist(data, plot=True, span=None, verbose=True, title=None, fid_avg=False, b_
         """
         )
 
-    
     if b_plot:
         axs[0, 2].imshow(np.array([[gg, ge], [eg, ee]]))
         axs[0, 2].set_xticks([0, 1])
@@ -755,6 +756,7 @@ def hist(data, plot=True, span=None, verbose=True, title=None, fid_avg=False, b_
     plt.tight_layout()
     plt.show()
     return fids, thresholds, theta*180/np.pi  # fids: ge, gf, ef
+
 
 if __name__ == "__main__":
     import sys
