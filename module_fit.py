@@ -1,13 +1,15 @@
 import cmath
 from typing import Dict, Optional
-
-import h5py as h5
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
 from scipy.optimize import minimize_scalar
+from .fitting import *
 
-from fitting import *
+try:
+    from . import resonator_tools
+except:
+    print("No circle fit package")
 
 figsize = (8, 6)
 
@@ -108,7 +110,7 @@ def resonator_analyze2(x, y, fit: bool = True):
     """
     y = np.abs(y)
     pOpt, pCov = fit_asym_lor(x, y)
-    res = pOpt[2] / 1e9
+    res = pOpt[2]
 
     plt.figure(figsize=figsize)
     plt.title(f"resonator spectrum.", fontsize=15)
@@ -116,7 +118,7 @@ def resonator_analyze2(x, y, fit: bool = True):
     if fit == True:
         plt.plot(x, asym_lorfunc(x, *pOpt),
                  label=f"fit, $\kappa$={pOpt[3]/1e6:.3f}MHz")
-    plt.axvline(res, color="r", ls="--", label=f"$f_res$ = {res/1e9:.2f} GHz")
+    plt.axvline(res, color="r", ls="--", label=f"$f_res$ = {res/1e9:.3f} GHz")
     plt.legend()
     plt.show()
     return round(res, 2)
@@ -396,10 +398,10 @@ def T1_analyze(x: float, y: float, fit: bool = True, normalize: bool = False):
     r_square = rsquare(y, sim)
 
     plt.figure(figsize=figsize)
-    plt.plot(x, y, label="meas", ls="-", marker="s", markersize=5)
+    plt.plot(x*1e-6, y, label="meas", ls="-", marker="s", markersize=5)
     if fit == True:
-        plt.plot(x, sim, label=f"fit, R square = {r_square:.2f}")
-    plt.title(f"T1 = {pOpt[3]/1e6:.2f}$\mu s$", fontsize=15)
+        plt.plot(x*1e-6, sim, label=f"fit, R square = {r_square:.2f}")
+    plt.title(f"decay = {pOpt[3]/1e6:.2f}$\mu s$", fontsize=15)
     plt.xlabel("$t\ (\mu s)$", fontsize=15)
     if normalize == True:
         plt.ylabel("Population", fontsize=15)
@@ -856,19 +858,19 @@ def plot_histogram2(bins, hist0, hist1, param0, param1, threshold):
 
 
 if __name__ == "__main__":
-    # import sys
-    # import os
+    import sys
+    import os
 
-    # os.chdir(r"C:\Users\QEL\Desktop\Jay PhD\Code\data_fitting\data")
-    # sys.path.append(r"C:\Program Files\Keysight\Labber\Script")
-    # import Labber
+    os.chdir(r"D:\Jay PhD\Code\data_fitting\data")
+    sys.path.append(r"C:\Program Files\Keysight\Labber\Script")
+    import Labber
 
-    # np.bool = bool
-    # np.float = np.float64
+    np.bool = bool
+    np.float = np.float64
     # res = r"Normalized_coupler_chen_054[7]_@7.819GHz_power_dp_002.hdf5"
     # pdr = r"r1_pdr.hdf5"
     # lenghrabi = r"q1_rabi.hdf5"
-    # t1 = r"q1_T1_2.hdf5"
+    # t1 = r"C:\Users\QEL\Downloads\steady_decay.hdf5"
     # t2 = r"q2_T2Ramsey.hdf5"
     # spec = r"q1_twotone_4.hdf5"
 
@@ -886,29 +888,29 @@ if __name__ == "__main__":
     # # spectrum_analyze(sx, sy, plot=True)
     # # lengthraig_analyze(rx, ry, plot=True, normalize=False)
     # # amprabi_analyze(rx, ry, fit=True, normalize=True)
-    # # T1_analyze(t1x, t1y, fit=True,normalize=False)
+    T1_analyze(t1x*1e6, t1y, fit=True, normalize=False)
     # T2r_analyze(t2x, t2y, fit=True, normalize=False)
     # # T2r_analyze(t1x, t1y, fit=True, normalize=False)
     # # resonator_analyze(x,y)
 
-    X0, Y0, X1, Y1 = load_data("./data/q1 single shot 30000 gain 0.8us.hdf5")
-    # X0, Y0, X1, Y1 = load_data("./data/q1 single shot 30000 gain 1.5us.hdf5")
-    # X0, Y0, X1, Y1 = load_data("./data/q1 single shot 30000 gain2.hdf5")
+    # X0, Y0, X1, Y1 = load_data("./data/q1 single shot 30000 gain 0.8us.hdf5")
+    # # X0, Y0, X1, Y1 = load_data("./data/q1 single shot 30000 gain 1.5us.hdf5")
+    # # X0, Y0, X1, Y1 = load_data("./data/q1 single shot 30000 gain2.hdf5")
 
-    D0 = calculate_density(X0, Y0)
-    D1 = calculate_density(X1, Y1)
+    # D0 = calculate_density(X0, Y0)
+    # D1 = calculate_density(X1, Y1)
 
-    param0 = fit_data(X0, Y0, D0)
-    param1 = fit_data(X1, Y1, D1)
-    print(f"Fit 0: {param0}")
-    print(f"Fit 1: {param1}")
+    # param0 = fit_data(X0, Y0, D0)
+    # param1 = fit_data(X1, Y1, D1)
+    # print(f"Fit 0: {param0}")
+    # print(f"Fit 1: {param1}")
 
-    angle, rX0, rY0, rparam0, rX1, rY1, rparam1 = rotate_data(
-        X0, Y0, param0, X1, Y1, param1
-    )
-    bins, hist0, hist1 = calculate_histogram(rX0, rX1)
-    fidelity, threshold = calculate_threshold(bins, hist0, hist1)
-    plot_histogram2(bins, hist0, hist1, rparam0, rparam1, threshold)
-    print(f"Angle: {angle: .2f} (rad)")
-    print(f"Threshold: {threshold: .2f}")
-    print(f"Fidelity: {fidelity: .3f}")
+    # angle, rX0, rY0, rparam0, rX1, rY1, rparam1 = rotate_data(
+    #     X0, Y0, param0, X1, Y1, param1
+    # )
+    # bins, hist0, hist1 = calculate_histogram(rX0, rX1)
+    # fidelity, threshold = calculate_threshold(bins, hist0, hist1)
+    # plot_histogram2(bins, hist0, hist1, rparam0, rparam1, threshold)
+    # print(f"Angle: {angle: .2f} (rad)")
+    # print(f"Threshold: {threshold: .2f}")
+    # print(f"Fidelity: {fidelity: .3f}")

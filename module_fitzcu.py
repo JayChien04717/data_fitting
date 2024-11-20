@@ -1,11 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy as sp
-import cmath
-from fitting import *
+from .fitting import *
 from typing import Optional, Dict
+
+
 try:
-    from resonator_tools import circuit
+    from . import resonator_tools
 except:
     print("No circle fit package")
 figsize = (8, 6)
@@ -81,11 +82,11 @@ def resonator_analyze(x: float, y: float) -> Optional[Dict]:
         fitting result, data contain Qc, Qi, Ql .ect.
     """
 
-    port1 = circuit.notch_port()
+    port1 = resonator_tools.circuit.notch_port()
     port1.add_data(x, y)
     port1.autofit()
     port1.plotall()
-    return port1.fitresults
+    return
 
 
 def resonator_analyze2(x, y, fit: bool = True):
@@ -216,7 +217,7 @@ def amprabi_analyze(x: int, y: float, fit: bool = True, normalize: bool = False,
         return the pi pulse gain, pi/2 pulse gain and max value minus min value
     """
     y = np.abs(y)
-    pOpt, pCov = fitampdecaysin(x, y, p0=p0)
+    pOpt, pCov = fitdecaysin(x, y, p0=p0)
     sim = decaysin(x, *pOpt)
 
     pi = round(x[np.argmax(sim)], 1)
@@ -761,7 +762,7 @@ def hist(data, plot=True, span=None, verbose=True, title=None, fid_avg=False, b_
 if __name__ == "__main__":
     import sys
     import os
-    os.chdir(r'C:\Users\QEL\Desktop\Jay PhD\Code\data_fitting\data')
+    os.chdir(r'D:\Jay PhD\Code\data_fitting\data')
     sys.path.append(r'C:\Program Files\Keysight\Labber\Script')
     import Labber
 
@@ -770,24 +771,26 @@ if __name__ == "__main__":
     res = r'Normalized_coupler_chen_054[7]_@7.819GHz_power_dp_002.hdf5'
     pdr = r'r1_pdr.hdf5'
     lenghrabi = r'q1_rabi.hdf5'
-    t1 = r'q1_T1_2.hdf5'
-    t2 = r'q1_T2Ramsey_3.hdf5'
+    t1 = r"C:\Users\QEL\Desktop\New folder\q5 NDavg T1.hdf5"
+    t2 = r'C:\Users\QEL\Desktop\New folder\q5 NDavg T2 echo .hdf5'
     spec = r'q1_twotone_4.hdf5'
-
+    # shot = r"C:\Users\QEL\Desktop\New folder\q5 single shot 5000 gain 0.9us -0.1mA.hdf5"
     spec = Labber.LogFile(spec)
     pdr = Labber.LogFile(pdr)
     fr = Labber.LogFile(res)
     f1 = Labber.LogFile(lenghrabi)
     f2 = Labber.LogFile(t1)
     f3 = Labber.LogFile(t2)
+    # shot = Labber.LogFile(shot)
     (x, y) = fr.getTraceXY(entry=3)
     (sx, sy) = spec.getTraceXY()
     (rx, ry) = f1.getTraceXY()
     (t1x, t1y) = f2.getTraceXY()
     (t2x, t2y) = f3.getTraceXY()
+    T2decay_analyze(t2x*1e6, t2y, fit=True)
     # spectrum_analyze(sx, sy, plot=True)
     # lengthraig_analyze(rx, ry, plot=True, normalize=False)
     # amprabi_analyze(rx, ry, fit=True, normalize=True)
-    # T1_analyze(t1x, t1y, fit=True,normalize=True)
-    T2r_analyze(t2x, t2y, fit=True, normalize=False)
+    # T1_analyze(t1x*1e6, t1y, fit=True, normalize=True)
+    # T2r_analyze(t2x, t2y, fit=True, normalize=False)
     # resonator_analyze(x,y)
