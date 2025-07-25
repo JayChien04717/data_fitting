@@ -102,14 +102,14 @@ def general_hist(
         I, Q = data_check
         Ig_tot_tot = np.concatenate((Ig_tot_tot, I))
         Qg_tot_tot = np.concatenate((Qg_tot_tot, Q))
-        Ie_tot_tot = np.concatenate((Ig_tot_tot, I))
-        Qe_tot_tot = np.concatenate((Qg_tot_tot, Q))
+        Ie_tot_tot = np.concatenate((Ie_tot_tot, I))
+        Qe_tot_tot = np.concatenate((Qe_tot_tot, Q))
         if check_i in g_states:
             Ig_tot = np.concatenate((Ig_tot, I))
             Qg_tot = np.concatenate((Qg_tot, Q))
         elif check_i in e_states:
-            Ie_tot = np.concatenate((Ig_tot, I))
-            Qe_tot = np.concatenate((Qg_tot, Q))
+            Ie_tot = np.concatenate((Ie_tot, I))
+            Qe_tot = np.concatenate((Qe_tot, Q))
 
     if not amplitude_mode:
         """Compute the rotation angle"""
