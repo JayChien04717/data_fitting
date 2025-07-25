@@ -1,1 +1,4 @@
-from .avoided_crossing_analysis import AvoidedCrossingAnalysis, avoided_crossing_direct_coupling
+from .avoided_crossing_analysis import (
+    AvoidedCrossingAnalysis,
+    avoided_crossing_direct_coupling,
+)

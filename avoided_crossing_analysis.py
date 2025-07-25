@@ -2,8 +2,9 @@
 """Utilities for analyzing avoided level crossings.
 
 This module defines :class:`AvoidedCrossingAnalysis` which loads two-dimensional
-spectroscopy data, extracts resonance branches and fits them using
-``lmfit`` to the ``avoided_crossing_direct_coupling`` model.
+spectroscopy data, extracts resonance branches and fits them using ``lmfit`` to
+the :func:`avoided_crossing_direct_coupling` model with linear flux
+dependence.
 """
 
 from __future__ import annotations
@@ -19,40 +20,56 @@ except Exception:  # pragma: no cover - optional dependency
 
 
 def avoided_crossing_direct_coupling(flux: np.ndarray,
-                                     f_q0: float,
-                                     f_q_amp: float,
-                                     period: float,
-                                     f_r: float,
-                                     g: float) -> tuple[np.ndarray, np.ndarray]:
-    """Simple direct coupling model.
+                                     f_center1: float,
+                                     f_center2: float,
+                                     c1: float,
+                                     c2: float,
+                                     g: float,
+                                     flux_state: int | np.ndarray | None = None,
+                                     ) -> tuple[np.ndarray, np.ndarray] | np.ndarray:
+    """Direct coupling model with linear flux dependence.
 
     Parameters
     ----------
     flux : array_like
         Flux values.
-    f_q0 : float
-        Qubit frequency at zero flux.
-    f_q_amp : float
-        Amplitude of the flux dependence of the qubit frequency.
-    period : float
-        Flux period (typically ``Phi0``).
-    f_r : float
-        Bare resonator frequency.
+    f_center1 : float
+        Intercept of the first branch.
+    f_center2 : float
+        Intercept of the second branch.
+    c1 : float
+        Slope of the first branch.
+    c2 : float
+        Slope of the second branch.
     g : float
         Coupling strength.
+    flux_state : int or array_like, optional
+        If given, select which eigenvalue to return for each flux value.
 
     Returns
     -------
-    tuple of ndarray
-        Upper and lower branch frequencies.
+    tuple of ndarray or ndarray
+        Upper and lower branch frequencies, or the selected branch if
+        ``flux_state`` is provided.
     """
     flux = np.asarray(flux)
-    f_q = f_q0 + f_q_amp * np.cos(2 * np.pi * flux / period)
-    delta = f_q - f_r
-    split = np.sqrt(delta ** 2 + 4 * g ** 2)
-    f_plus = (f_q + f_r + split) / 2
-    f_minus = (f_q + f_r - split) / 2
-    return f_plus, f_minus
+    if flux_state is not None and isinstance(flux_state, int):
+        flux_state = [flux_state] * len(flux)
+
+    frequencies = np.zeros((len(flux), 2))
+    for kk, dac in enumerate(flux):
+        f_1 = dac * c1 + f_center1
+        f_2 = dac * c2 + f_center2
+        matrix = [[f_1, g], [g, f_2]]
+        frequencies[kk, :] = np.linalg.eigvalsh(matrix)
+
+    f_minus = frequencies[:, 0]
+    f_plus = frequencies[:, 1]
+
+    if flux_state is None:
+        return f_plus, f_minus
+    flux_state = np.asarray(flux_state)
+    return np.where(flux_state, f_minus, f_plus)
 
 
 class AvoidedCrossingAnalysis:
@@ -122,10 +139,10 @@ class AvoidedCrossingAnalysis:
 
     # ------------------------------------------------------------------
     def fit(self,
-            f_q0: float,
-            f_q_amp: float,
-            period: float,
-            f_r: float,
+            f_center1: float,
+            f_center2: float,
+            c1: float,
+            c2: float,
             g: float) -> None:
         """Fit the extracted peaks using ``lmfit``."""
         if self.upper is None or self.lower is None:
@@ -133,18 +150,18 @@ class AvoidedCrossingAnalysis:
         x = np.concatenate([self.flux, self.flux])
         y = np.concatenate([self.upper, self.lower])
 
-        def model(flux_all, f_q0, f_q_amp, period, f_r, g):
+        def model(flux_all, f_center1, f_center2, c1, c2, g):
             n = len(flux_all) // 2
             flux = flux_all[:n]
-            up, low = avoided_crossing_direct_coupling(flux, f_q0, f_q_amp, period, f_r, g)
+            up, low = avoided_crossing_direct_coupling(flux, f_center1, f_center2, c1, c2, g)
             return np.concatenate([up, low])
 
         mod = Model(model)
         params = Parameters()
-        params.add("f_q0", value=f_q0)
-        params.add("f_q_amp", value=f_q_amp)
-        params.add("period", value=period)
-        params.add("f_r", value=f_r)
+        params.add("f_center1", value=f_center1)
+        params.add("f_center2", value=f_center2)
+        params.add("c1", value=c1)
+        params.add("c2", value=c2)
         params.add("g", value=g, min=0)
         self.result = mod.fit(y, params, flux_all=x)
 
@@ -160,14 +177,45 @@ class AvoidedCrossingAnalysis:
             plt.scatter(self.flux, self.upper, color="C1", s=10, label="upper")
             plt.scatter(self.flux, self.lower, color="C2", s=10, label="lower")
         if self.result is not None:
-            up, low = avoided_crossing_direct_coupling(self.flux,
-                                                       self.result.params["f_q0"].value,
-                                                       self.result.params["f_q_amp"].value,
-                                                       self.result.params["period"].value,
-                                                       self.result.params["f_r"].value,
-                                                       self.result.params["g"].value)
+            up, low = avoided_crossing_direct_coupling(
+                self.flux,
+                self.result.params["f_center1"].value,
+                self.result.params["f_center2"].value,
+                self.result.params["c1"].value,
+                self.result.params["c2"].value,
+                self.result.params["g"].value,
+            )
             plt.plot(self.flux, up, "C1--", label="fit upper")
             plt.plot(self.flux, low, "C2--", label="fit lower")
         plt.legend()
         plt.tight_layout()
         plt.show()
+
+    # ------------------------------------------------------------------
+    def estimate_initial_params(self) -> dict[str, float]:
+        """Estimate initial fit parameters from extracted peaks."""
+        if self.upper is None or self.lower is None:
+            raise RuntimeError("run find_raw_peaks first")
+
+        idx = int(np.nanargmin(np.abs(self.upper - self.lower)))
+        g = 0.5 * np.abs(self.upper[idx] - self.lower[idx])
+
+        mask_up = ~np.isnan(self.upper)
+        mask_low = ~np.isnan(self.lower)
+
+        c1, f_center1 = np.polyfit(self.flux[mask_up], self.upper[mask_up], 1)
+        c2, f_center2 = np.polyfit(self.flux[mask_low], self.lower[mask_low], 1)
+
+        return {
+            "f_center1": float(f_center1),
+            "f_center2": float(f_center2),
+            "c1": float(c1),
+            "c2": float(c2),
+            "g": float(g),
+        }
+
+    # ------------------------------------------------------------------
+    def autofit(self) -> None:
+        """Automatically estimate parameters and run :meth:`fit`."""
+        params = self.estimate_initial_params()
+        self.fit(**params)
